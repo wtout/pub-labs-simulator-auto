@@ -1,0 +1,116 @@
+---
+# Build information
+build:
+
+  # Build name (string)
+  name: PAESIM
+
+  version:
+
+    # CentOS ISO (string)
+    centos_iso: 
+
+  # Deployment model (string a/h)
+  deployment_model: h
+
+  # Disaster recovery (boolean yes/no)
+  disaster_recovery: no
+
+  primary:
+
+  # Number of primary simulator VMs (integer)
+    number_of_smlt: 3
+
+  # Simulator Network(s) (list of strings)
+    networks: 18.0.0.0/16 18.1.0.0/16 18.2.0.0/16
+
+  # Primary site name prefix (string)
+    name_prefix: devsim
+
+  # Primary site first 3 octets (string)
+    octets: 172.30.252
+
+  secondary:
+
+  # Number of secondary simulator VMs (integer)
+    number_of_smlt: 2
+
+  # Simulator Network(s) (list of strings)
+    networks: 19.0.0.0/16 19.1.0.0/16
+
+  # Secondary site name prefix (string)
+    name_prefix: devsim2
+
+  # Secondary site first 3 octets (string)
+    octets: 172.30.210
+
+##################################################################################
+# Datacenter where the stack is to be built
+##################################################################################
+datacenter:
+
+  primary:
+
+    # Available datacenters: RTP-Staging, PAE-HX-DC-1, PAE-HX-DC-2, PAE-HX-DC-3, Plat-Ops, Dev Engineering, cdra-Build-Development, PAE-Customer-Build, RTP5, Alln1 (string)
+    name: 'PAE-HX-DC-2'
+
+    # Required if a custom cluster name is to be used
+    # The primary cluster to host the customer's primary stack
+    cluster: 
+
+    # Required if a custom folder name is to be used
+    # The primary folder to host the customer's primary stack
+    folder: PAESIM
+
+    # ONLY for on-premise deployments, define the list of esxi hosts (resources) to use (string)
+    # For hosted deployments DO NOT TOUCH
+    # Use ',', ';' or space as separator when you have more than one host
+    resources: 
+
+  secondary:
+
+    # Available datacenters: RTP-Staging, PAE-HX-DC-1, PAE-HX-DC-2, PAE-HX-DC-3, Plat-Ops, Dev Engineering, cdra-Build-Development, PAE-Customer-Build, RTP5, Alln1 (string)
+    name: 'PAE-HX-DC-4'
+
+    # Required if a custom cluster name is to be used
+    # The secondary cluster to host the customer's secondary stack
+    cluster: 
+
+    # Required if a custom folder name is to be used
+    # The secondary folder to host the customer's secondary stack
+    folder: PAESIM
+
+    # ONLY for on-premise deployments, define the list of esxi hosts (resources) to use (string)
+    # For hosted deployments DO NOT TOUCH
+    # Use ',', ';' or space as separator when you have more than one host
+    resources: 
+
+
+vm_setting:
+  smlt:
+    cpu: 4
+    memory: 16
+    disk0: 40
+    disk1: 100
+    user:
+      name: paelabsadmin
+      password: ast7roslab
+    nic1:
+      ip_octetpool: ['162','163','164']
+      gtw: '172.30.252.254'
+      netmask: '255.255.255.0'
+      netname: 'HX-DVS-252'
+      intname: 'ens160'
+
+drvm_setting:
+  smlt:
+    cpu: 2
+    memory: 4
+    disk0: 40
+    disk1: 25
+    nic1:
+      ip_octetpool: ['123', '124']
+      gtw: '172.30.210.251'
+      netmask: '255.255.255.0'
+      netname: 'HX-MDR'
+      intname: 'ens160'

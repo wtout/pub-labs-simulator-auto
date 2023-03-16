@@ -1,0 +1,15 @@
+---
+# tasks to ssh key from known_hosts file
+- block:
+  - name: check if known hosts file exists
+    ansible.builtin.stat:
+      path: ~/.ssh
+    register: ssh_dir
+  - name: delete ssh key
+    ansible.builtin.lineinfile:
+      path: ~/.ssh/known_hosts
+      regex: '^{{ ansible_host }}.*$'
+      state: absent
+    when: ssh_dir.stat.exists
+  delegate_to: localhost
+  tags: vm_creation

@@ -1,0 +1,21 @@
+---
+# tasks to update registry files with correct network information
+- block:
+  - name: find all AVM files
+    ansible.builtin.find:
+      paths: "/opt/{{ automation_reponame }}/simulator/registry"
+      patterns: 'avm*.xml'
+    register: reg_avm_files
+    no_log: true
+  - name: Update network in registry files
+    ansible.builtin.replace:
+      path: "{{ file_item.path }}"
+      regexp: '^(.*ips">)\d{,3}(\..*)$'
+      replace: '\g<1>{{ host_network|split(".")|first }}\g<2>'
+    loop: "{{ reg_avm_files.files }}"
+    loop_control:
+      loop_var: file_item      
+    vars:
+      host_network: "{{ hostvars[inventory_hostname]['build']['secondary' if 'dr' in group_names else 'primary']['networks'][inventory_hostname[-2:]|int -1] }}"
+  become: "{{ true if ansible_user != 'root' else false }}"
+  tags: vm_configuration

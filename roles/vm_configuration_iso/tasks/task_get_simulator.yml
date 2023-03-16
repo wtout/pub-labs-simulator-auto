@@ -1,0 +1,36 @@
+---
+# Tasks to copy the simulator packages
+- block:
+  - name: clone the repos
+    git:
+      repo: "{{ repo_item.name | regex_replace('//', '//' + repo_creds + '@') }}"
+      dest: "/opt/{{ repo_item.name | basename | replace('.git','') }}"
+      version: "{{ repo_item.release }}"
+      force: yes
+    loop:
+      - { name: "{{ automation_site }}/{{ automation_reponame }}.git", release: 'HEAD' }
+    loop_control:
+      loop_var: repo_item
+    register: reg_clone_repos1
+    ignore_errors: yes
+    async: 200
+    poll: 10
+  - name: clone the repos
+    git:
+      repo: "{{ repo_item.name | regex_replace('//', '//' + repo_creds + '@') }}"
+      dest: "/opt/{{ repo_item.name | basename | replace('.git','') }}"
+      version: "{{ repo_item.release }}"
+      force: yes
+    loop:
+      - { name: "{{ automation_site }}/{{ automation_reponame }}.git", release: 'HEAD' }
+    loop_control:
+      loop_var: repo_item
+    register: reg_clone_repos2
+    async: 200
+    poll: 10
+    when: reg_clone_repos1 is failed
+  - name: define clone_repos
+    ansible.builtin.set_fact:
+      clone_repos: "{{ reg_clone_repos1 if reg_clone_repos1 is succeeded else reg_clone_repos2 }}"
+  become: "{{ true if ansible_user != 'root' else false }}"
+  tags: vm_configuration

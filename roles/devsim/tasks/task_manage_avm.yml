@@ -1,0 +1,41 @@
+---
+# tasks to manage AVM file
+- block:
+  - block:
+    - name: create dummy{{ avm_id }} interface
+      community.general.nmcli:
+        conn_name: "dummy{{ avm_id }}"
+        type: dummy
+        ip4: 192.0.0.1/24
+        ip6: 2001:db8:2::1/64
+        state: present
+    - name: start AVM {{ avm_id }}
+      ansible.builtin.shell:
+        sh runavm.sh {{ avm_id }} {{ avm_id }} &
+      register: reg_start
+      no_log: yes
+      args:
+        chdir: /opt/{{ automation_reponame }}/simulator
+    rescue:
+    - debug:
+        msg: "{{ reg_start }}"
+    when: avm_action == 'start'
+  - block:
+    - name: stop AVM {{ avm_id }}
+      ansible.builtin.shell:
+        sh stopsim.sh {{ avm_id }}
+      register: reg_stop
+      no_log: yes
+      args:
+        chdir: /opt/{{ automation_reponame }}/simulator
+      when: avm_id is in active_avmid_list
+    - name: delete dummy{{ avm_id }} interface
+      community.general.nmcli:
+        conn_name: "dummy{{ avm_id }}"
+        state: absent
+    rescue:
+    - debug:
+        msg: "{{ reg_stop }}"
+    when: avm_action == 'stop'
+  become: "{{ true if ansible_user != 'root' else false }}"
+  tags: [ 'never', 'devsim' ]

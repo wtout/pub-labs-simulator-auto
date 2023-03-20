@@ -2,7 +2,7 @@
 # tasks to deploy VM from ISO
 - block:
   - name: Deploy VM from ISO
-    vmware_guest:
+    community.vmware.vmware_guest:
       hostname: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['address'] }}"
       username: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['username'] }}"
       password: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['password'] }}"
@@ -26,6 +26,7 @@
         boot_firmware: "bios"
         version: 'latest'
       networks: "{{ nics_list }}"
+      advanced_settings: "{{ advsets_list }}"
       cdrom:
         - type: iso
           iso_path: "[{{ iso_datastore }}] {{ iso_path }}/{{ iso_installer }}"
@@ -46,7 +47,7 @@
   - name: Wait for port 22 to become open and contain "OpenSSH"
     wait_for:
       port: 22
-      host: "{{ netconfig.nic1.ipaddress }}"
+      host: "{{ netconfig.nic1.ipaddress if netconfig.nic1.ipaddress != '' else netconfig.nic2.ipaddress }}"
       search_regex: OpenSSH
       delay: 10
       timeout: 1800

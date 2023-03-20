@@ -48,5 +48,7 @@
     until: restart_net is succeeded
   when:
     - netconfig.nic1.gateway == ''
+    - netconfig.nic1.ipaddress != ''
+    - netconfig.nic2.ipaddress != ''
   delegate_to: localhost
   tags: vm_creation

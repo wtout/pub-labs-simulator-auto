@@ -193,12 +193,25 @@
       loop: "{{ environment_definition.build.primary.networks.split(netseparator) }}"
       loop_control:
         loop_var: ip_item
-    - name: reformat secondary networks list
+    - name: define primary NIC2 IP list
       set_fact:
-        secondary_networks: "{{ secondary_networks|default([]) + [ip_item] }}"
-      loop: "{{ environment_definition.build.secondary.networks.split(netseparator) }}"
+        primary_nic2_ip_list: "{{ primary_nic2_ip_list|default([]) + [(ip_item|split('.'))[:-1]|join('.') + '.1'] }}"
+      loop: "{{ primary_networks }}"
       loop_control:
         loop_var: ip_item
+    - block:
+      - name: reformat secondary networks list
+        set_fact:
+          secondary_networks: "{{ secondary_networks|default([]) + [ip_item] }}"
+        loop: "{{ environment_definition.build.secondary.networks.split(netseparator) }}"
+        loop_control:
+          loop_var: ip_item
+      - name: define secondary NIC2 IP list
+        set_fact:
+          secondary_nic2_ip_list: "{{ secondary_nic2_ip_list|default([]) + [(ip_item|split('.'))[:-1]|join('.') + '.1'] }}"
+        loop: "{{ secondary_networks }}"
+        loop_control:
+          loop_var: ip_item
       when:
         - environment_definition.build.disaster_recovery
 

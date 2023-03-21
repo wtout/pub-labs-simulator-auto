@@ -623,23 +623,6 @@ function disable_logging() {
 	fi
 }
 
-function send_notification() {
-	if [[ "$(check_mode "${@}")" == " " ]]
-	then
-		SCRIPT_ARG="${@//-/dash}"
-		if [[ -z ${MYINVOKER+x} ]]
-		then
-			# Send playbook status notification
-			$(docker_cmd) exec -it ${CONTAINERNAME} ansible-playbook playbooks/notify.yml --extra-vars "{SVCFILE: '${CONTAINERWD}/${SVCVAULT}', SNAME: '$(basename "${0}")', SARG: '${SCRIPT_ARG}', LFILE: '${CONTAINERWD}/${NEW_LOG_FILE}', NHOSTS: '${NUM_HOSTSINPLAY}'}" --tags notify -e @"${SVCVAULT}" --vault-password-file Bash/get_common_vault_pass.sh -e @"${ANSIBLE_VARS}" -v &>/dev/null
-		else
-			local INVOKED
-			INVOKED=true
-			# Send playbook status notification
-			$(docker_cmd) exec -it ${CONTAINERNAME} ansible-playbook playbooks/notify.yml --extra-vars "{SVCFILE: '${CONTAINERWD}/${SVCVAULT}', SNAME: '$(basename "${0}")', SARG: '${SCRIPT_ARG}', LFILE: '${CONTAINERWD}/${NEW_LOG_FILE}', NHOSTS: '${NUM_HOSTSINPLAY}', INVOKED: ${INVOKED}}" --tags notify -e @"${SVCVAULT}" --vault-password-file Bash/get_common_vault_pass.sh -e @"${ANSIBLE_VARS}" -v
-		fi
-	fi
-}
-
 # Parameters definition
 ANSIBLE_CFG="ansible.cfg"
 ANSIBLE_LOG_LOCATION="Logs"
@@ -651,13 +634,11 @@ PASSVAULT="vars/passwords.yml"
 REPOVAULT="vars/.repovault.yml"
 CONTAINERWD="/home/ansible/$(basename ${PWD})"
 CONTAINERREPO="containers.cisco.com/watout/ansible"
-MDR_AUTO_LOCATION="imp_auto"
-SECON=false
+SECON=true
 
 # Main
 PID="${$}"
 create_dir "${ANSIBLE_LOG_LOCATION}"
-[[ "$(basename ${0})" == *"deploy"* && "${ENAME}" == *"mdr"* ]] && create_dir "${MDR_AUTO_LOCATION}"
 check_arguments "${@}"
 check_docker_login
 restart_docker
@@ -710,6 +691,3 @@ start_container
 run_playbook "${@}"
 stop_container
 disable_logging
-#start_container
-#send_notification "${ORIG_ARGS}"
-#stop_container

@@ -63,7 +63,7 @@ The system definition file consists of the following variables:
 
 To create the system inventory without deploying the system, issue the following command from the automation root directory (pae-labs-simulator-auto):
 
-    $> sh Bash/play_deploy.sh --envname <definition-file-name> --tags none
+    $> sh Bash/play_deploy.sh --envname <system-name> --tags none
 
 
 ### ISO Image ###
@@ -75,15 +75,15 @@ The tool automatically creates a symbolic link to the _``Packages``_ directory i
 
 1- From the automation root directory (pae-labs-simulator-auto), run one of the bash scripts under the Bash directory depending on what you want to do. 
 
-    $> sh Bash/<script name> --envname <definition-file-name>
+    $> sh Bash/<script name> --envname <system-name>
 
-with the _``definition-file-name``_ being the name of the system definition file from "System Definition" and the script name being one of the following options:
+with the _``system-name``_ being the name of the system definition file from "System Definition" and the script name being one of the following options:
 
 - ``play_deploy.sh``
 
 - ``play_rollback.sh``
 
-  Script output is automatically saved to a log file. The file is saved under _``Logs/<script-name>.<definition-file-name>.log.<time-stamp>``_ on the Ansible control machine
+  Script output is automatically saved to a log file. The file is saved under _``Logs/<script-name>.<system-name>.log.<time-stamp>``_ on the Ansible control machine
 
 ***Note**: Running multiple instances of the same script for a given build simultaneously is prohibited*
 
@@ -105,7 +105,6 @@ The list of roles used in the playbooks:
   - **vm_hardening**: enables hardening on the VMS created from ISO
   - **vm_configuration_iso**: configures the stack's VMs created from ISO
   - **devsim**: manages the device simulator
-  - **notify**: sends a notification via Webex Teams channel indicating the status of the activity
 
 To execute specific role(s), add "_--tags 'role1,role2,etc...'_" as argument to the script.
 
@@ -113,17 +112,17 @@ To skip specific role(s), add "_--skip-tags 'role1,role2,etc...'_" as argument t
 
 **_Example1_**: to execute one or more roles, run the script as follows:
 
-    $> sh Bash/<script-name> --envname <definition-file-name> --tags 'role1,role2,etc...'
+    $> sh Bash/<script-name> --envname <system-name> --tags 'role1,role2,etc...'
 
 **_Example2_**: to run all roles except one or more, run the script as follows:
 
-    $> sh Bash/<script-name> --envname <definition-file-name> --skip-tags 'role1,role2,etc...'
+    $> sh Bash/<script-name> --envname <system-name> --skip-tags 'role1,role2,etc...'
 
 To limit the processing to specific host(s) or group(s) or a combination of both, add "_--limit 'group1,host1,etc...'_" as argument to the script.
 
 **_Example3_**: to execute role1 and role2 on the linux jump servers and on relay01, run the script as follows:
 
-    $> sh Bash/<script-name> --envname <definition-file-name> --tags 'role1,role2' --limit 'lnxjmp,rly01'
+    $> sh Bash/<script-name> --envname <system-name> --tags 'role1,role2' --limit 'lnxjmp,rly01'
 
 ***Note**: group(s) or host(s) names specified with --limit must match the names defined in the hosts.yml file*
 
@@ -132,9 +131,9 @@ To limit the processing to specific host(s) or group(s) or a combination of both
 
 From the automation root directory (pae-labs-simulator-auto), run one of the bash scripts under the Bash directory depending on what you want to do. 
 
-    $> sh Bash/<script name> --envname <definition-file-name> --tags devsim [--avmlist id1,id2,etc...]
+    $> sh Bash/<script name> --envname <system-name> --tags devsim [--avmlist id1,id2,etc...]
 
-with the _``definition-file-name``_ being the name of the system definition file from "System Definition" and the script name being one of the following options:
+with the _``system-name``_ being the name of the system definition file from "System Definition" and the script name being one of the following options:
 
 - ``play_deploy.sh`` in combination with the --tags devsim, enables the user to start the simulation of devices described in AVM file(s)
 
@@ -142,25 +141,25 @@ with the _``definition-file-name``_ being the name of the system definition file
 
 - ``play_check.sh`` in combination with the --tags devsim, enables the user to check the status of simulated devices described in AVM file(s)
 
-**_Example1_**: to check what AVM IDs are available and what IDs are currently active (started), run the script as follows:
+**_Example1_**: to check what AVM IDs are available and what IDs are currently active (started), run the script as follows
 
-    $> sh Bash/play_check.sh --envname <definition-file-name> --tags devsim
+    $> sh Bash/play_check.sh --envname <system-name> --tags devsim
 
-**_Example2_**: to start all available AVM IDs, run the script as follows:
+**_Example2_**: to start all available AVM IDs, run the script as follows
 
-    $> sh Bash/play_deploy.sh --envname <definition-file-name> --tags devsim
+    $> sh Bash/play_deploy.sh --envname <system-name> --tags devsim
 
-**_Example3_**: to start specific AVM IDs, run the script as follows:
+**_Example3_**: to start specific AVM IDs, run the script as follows
 
-    $> sh Bash/play_deploy.sh --envname <definition-file-name> --tags devsim --avmlist id1,id2,id3,etc...
+    $> sh Bash/play_deploy.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
 
-**_Example4_**: to stop specific AVM IDs, run the script as follows:
+**_Example4_**: to stop specific AVM IDs, run the script as follows
 
-    $> sh Bash/play_rollback.sh --envname <definition-file-name> --tags devsim --avmlist id1,id2,id3,etc...
+    $> sh Bash/play_rollback.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
 
-**_Example5_**: to stop all available AVM IDs, run the script as follows:
+**_Example5_**: to stop all available AVM IDs, run the script as follows
 
-    $> sh Bash/play_rollback.sh --envname <definition-file-name> --tags devsim
+    $> sh Bash/play_rollback.sh --envname <system-name> --tags devsim
 
 
 ### Who do I talk to? ###

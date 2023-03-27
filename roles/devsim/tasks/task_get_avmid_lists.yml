@@ -32,10 +32,7 @@
     when: AVMLIST|default('') == ''
   - name: define avmid lists
     ansible.builtin.set_fact:
-      good_avmid_list: "{{ good_avmid_list|default([]) | union([id_item] if id_item in avm_list else []) }}"
-      bad_avmid_list: "{{ bad_avmid_list|default([]) | union([id_item] if id_item not in avm_list else []) }}"
-    loop: "{{ AVMLIST|split(',')|list }}"
-    loop_control:
-      loop_var: id_item
+      good_avmid_list: "{{ AVMLIST|split(',')|list | intersect(avm_list) }}"
+      bad_avmid_list: "{{ AVMLIST|split(',')|list | difference(avm_list) }}"
     when: AVMLIST|default('') != ''
   tags: [ 'never', 'devsim' ]

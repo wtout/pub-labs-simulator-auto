@@ -509,12 +509,8 @@ function get_inventory() {
 		$(docker_cmd) exec -it ${CONTAINERNAME} ansible-playbook playbooks/getinventory.yml --extra-vars "{SYS_NAME: '${SYS_DEF}'}" -e @"${ANSIBLE_VARS}" -e "{auto_dir: '${CONTAINERWD}'}" $(remove_extra_vars_arg "$(remove_hosts_arg "${@}")") -v
 		GET_INVENTORY_STATUS=${?}
 		[[ ${GET_INVENTORY_STATUS} != 0 ]] && exit 1
-	elif [[ $(echo "${ENAME}" | grep -i "mdr") != '' ]]
-	then
-		[[ -d ${INVENTORY_PATH} ]] && GET_INVENTORY_STATUS=0 || GET_INVENTORY_STATUS=1
-		[[ ${GET_INVENTORY_STATUS} -ne 0 ]] && echo -e "\nInventory for ${BOLD}${ENAME}${NORMAL} system is not found. Aborting!" && exit 1
 	else
-		echo -e "\n${BOLD}Stack definition file for ${ENAME} cannot be found. Aborting!${NORMAL}"
+		echo -e "\n${BOLD}System definition file for ${ENAME} cannot be found. Aborting!${NORMAL}"
 		exit 1
 	fi
 }
@@ -668,6 +664,7 @@ image_prune
 start_container
 get_repo_creds "${REPOVAULT}" Bash/get_repo_vault_pass.sh
 check_updates "${REPOVAULT}" Bash/get_repo_vault_pass.sh
+get_inventory "${@}"
 [[ $- =~ x ]] && debug=1 && [[ "${SECON}" == "true" ]] && set +x
 get_svc_cred primary user 1>/dev/null && echo "PSVC_USER: '$(get_svc_cred primary user)'" > "${SVCVAULT}"
 get_svc_cred primary pass 1>/dev/null && echo "PSVC_PASS: '$(get_svc_cred primary pass)'" >> "${SVCVAULT}"
@@ -678,7 +675,6 @@ add_write_permission "${SVCVAULT}"
 encrypt_vault "${SVCVAULT}" Bash/get_common_vault_pass.sh
 sudo chown "$(stat -c '%U' "$(pwd)")":"$(stat -c '%G' "$(pwd)")" "${SVCVAULT}"
 sudo chmod 644 "${SVCVAULT}"
-get_inventory "${@}"
 get_hosts "${@}"
 NUM_HOSTSINPLAY=$(echo $(get_hostsinplay "${HL}") | wc -w)
 create_symlink

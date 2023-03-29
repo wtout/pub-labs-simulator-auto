@@ -2,32 +2,42 @@
 # tasks to manage AVM file
 - block:
   - block:
-    - name: create dummy{{ avm_id }} interface
+    - include_tasks: task_get_active_avmid.yml
+    - include_tasks: task_get_first_available_id.yml
+    - include_tasks: task_get_first_available_ip.yml
+    - include_tasks: task_create_avm_file.yml
+    - name: create dummy{{ first_available_id }} interface
       community.general.nmcli:
-        conn_name: "dummy{{ avm_id }}"
+        conn_name: "dummy{{ first_available_id }}"
         type: dummy
         ip4: 192.0.0.1/24
         ip6: 2001:db8:2::1/64
         state: present
-    - name: start AVM {{ avm_id }}
+    - name: start AVM {{ first_available_id }}
       ansible.builtin.shell:
-        sh runavm.sh {{ avm_id }} {{ avm_id }} &
+        sh runavm.sh {{ first_available_id }} {{ first_available_id }} &
       register: reg_start
       no_log: yes
       args:
         chdir: /opt/{{ automation_reponame }}/simulator
+      when: first_available_id not in active_avmid_list
     rescue:
     - debug:
         msg: "{{ reg_start }}"
     when: avm_action == 'start'
   - block:
-    - name: stop AVM {{ avm_id }}
-      ansible.builtin.shell:
-        sh stopsim.sh {{ avm_id }}
-      register: reg_stop
-      no_log: yes
-      args:
-        chdir: /opt/{{ automation_reponame }}/simulator
+    - block:
+      - name: stop AVM {{ avm_id }}
+        ansible.builtin.shell:
+          sh stopsim.sh {{ avm_id }}
+        register: reg_stop
+        no_log: yes
+        args:
+          chdir: /opt/{{ automation_reponame }}/simulator
+      - name: delete avm{{ avm_id }}.xml
+        ansible.builtin.file:
+          path: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avm_id }}.xml"
+          state: absent
       when: avm_id is in active_avmid_list
     - name: delete dummy{{ avm_id }} interface
       community.general.nmcli:

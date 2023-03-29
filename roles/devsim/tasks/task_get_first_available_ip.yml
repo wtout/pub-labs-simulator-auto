@@ -1,0 +1,25 @@
+---
+# tasks to get the first available IP
+- block:
+  - block:
+    - name: define first_available_ip
+      ansible.builtin.set_fact:
+        first_available_ip: "{{ host_network|ansible.utils.ipaddr('next_usable') }}"
+    when: active_avmid_list == []
+    vars:
+      host_network: "{{ hostvars[inventory_hostname]['build']['secondary' if 'dr' in group_names else 'primary']['networks'][inventory_hostname[-2:]|int -1] }}"
+  - block:
+    - name: get IP from highest AVM ID
+      ansible.builtin.shell: |
+        grep "^\s*<entry name=\"ips" /opt/{{ automation_reponame }}/simulator/registry/avm{{ active_avmid_list|max }}.xml
+      register: reg_used_ip
+      check_mode: no
+    - name: define first_available_ip
+      ansible.builtin.set_fact:
+        first_available_ip: "{{ uip|ansible.utils.ipmath(nip) }}"
+      vars:
+        ips: "{{ reg_used_ip.stdout|regex_replace('^.*ips\">(.*)</e.*$','\\1')|split('-') }}"
+        uip: "{{ ips|first }}"
+        nip: "{{ ips|last }}"
+    when: active_avmid_list != []
+  tags: [ 'never', 'devsim' ]

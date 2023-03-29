@@ -1,0 +1,7 @@
+---
+# tasks to get the first available AVM ID
+- block:
+  - name: define first_available_id
+    ansible.builtin.set_fact:
+      first_available_id: "{{ active_avmid_list|last|int + 1 if active_avmid_list != [] else first_dummy_interface_id }}"
+  tags: [ 'never', 'devsim' ]

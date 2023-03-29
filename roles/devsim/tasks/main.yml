@@ -49,10 +49,10 @@
     when: bad_avmid_list != []
   - debug:
       msg:
-        - 'Available AVM IDs:'
-        - "{{ good_avmid_list|join(',') }}"
-        - ''
         - 'Active AVM IDs:'
         - "{{ active_avmid_list|join(',') }}"
+        - ''
+        - 'Active devices:'
+        - "{{ active_device_list|join(',') }}"
     when: check_devsim | default(false) | bool
   tags: [ 'never', 'devsim' ]

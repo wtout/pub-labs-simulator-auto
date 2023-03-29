@@ -1,0 +1,11 @@
+---
+# Tasks to create the avm file
+- name: Create AVM file
+  template:
+    src: templates/avm.xml.tmpl
+    dest: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ first_available_id }}.xml"
+    owner: root
+    group: root
+    mode: 0644
+  become: "{{ true if ansible_user != 'root' else false }}"
+  tags: [ 'never', 'devsim' ]

@@ -1,0 +1,11 @@
+---
+# tasks to get the device info from AVM file
+- block:
+  - name: get device ID from {{ avm_file }}
+    ansible.builtin.shell: |
+      grep '^    <key name="' {{ avm_file }} | cut -d '"' -f2
+    register: reg_dev
+  - name: define active_device_list
+    ansible.builtin.set_fact:
+      active_device_list: "{{ active_device_list|default([]) + [reg_dev.stdout] }}"
+  tags: [ 'never', 'devsim' ]

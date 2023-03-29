@@ -1,0 +1,29 @@
+---
+# tasks to get the list of active AVM IDs
+- block:
+  - name: find active AVM files/IDs
+    ansible.builtin.shell:
+      sh whoisavm.sh
+    register: reg_active
+    check_mode: no
+    no_log: yes
+    args:
+      chdir: /opt/{{ automation_reponame }}/simulator
+  - name: define active_avmid_list
+    ansible.builtin.set_fact:
+      active_avmid_list: "{{ reg_active.stdout_lines }}"
+  - block:
+    - name: define active_device_list
+      ansible.builtin.set_fact:
+        active_device_list: []
+      when: active_avmid_list == []
+    - include_tasks:
+        file: task_get_active_device_info.yml
+        apply:
+          vars:
+            avm_file: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ id_item }}.xml"
+      loop: "{{ active_avmid_list }}"
+      loop_control:
+        loop_var: id_item
+    when: check_devsim | default(false) | bool
+  tags: [ 'never', 'devsim' ]

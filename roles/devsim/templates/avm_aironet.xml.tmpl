@@ -1,0 +1,27 @@
+<!-- Generic device config -->
+<key name="avm{{ avmid }}">
+  <key name="agents">
+    <key name="{{ device.id }}">
+      <entry name="snmpClassName">com.sheer.tools.simulator.snmp.Cisco6400NspSnmpSimulator</entry>
+      <entry name="telnetClassName">com.sheer.tools.simulator.telnet.Cisco7200TelnetSimulatorGenerator</entry>
+      <entry name="enableEcho">true</entry>
+      <entry name="cliError"><![CDATA[Incorrect usage.  Use the '?' or <TAB> key to list commands.]]></entry>
+      <entry name="ssh">2</entry>
+      <entry name="Username">{{ device.username }}</entry>
+      <entry name="Password">{{ device.password }}</entry>
+      <entry name="UsernamePrompt">User: </entry>
+      <key name="ipList">
+        <entry name="ips">{{ device.ip }}-{{ device.num }}</entry>
+      </key>
+      <key name="cisco">
+{% if device.snmp %}
+        <entry name="walkFile">../recordings/{{ device.type }}/snmp/{{ device.id }}.snmp</entry>
+{% endif %}
+        <entry name="prompt">{HOST} &gt;</entry>
+{% if device.ssh %}
+        <entry name="recordFile">../recordings/{{ device.type }}/telnet/{{ device.id }}.cli</entry>
+{% endif %}
+      </key>
+    </key>
+  </key>
+</key>

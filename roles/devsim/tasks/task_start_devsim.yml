@@ -5,9 +5,9 @@
       file: task_manage_avm.yml
       apply:
         vars:
-          avm_id: "{{ id_item }}"
+          device: "{{ device_item }}"
           avm_action: 'start'
-    loop: "{{ good_avmid_list }}"
+    loop: "{{ device_list }}"
     loop_control:
-      loop_var: id_item
+      loop_var: device_item
   tags: [ 'never', 'devsim' ]

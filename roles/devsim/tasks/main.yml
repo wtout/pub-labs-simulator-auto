@@ -46,13 +46,7 @@
       msg:
         - 'The following AVM IDs do not correspond to AVM files'
         - "{{ bad_avmid_list|join(',') }}"
-    when: bad_avmid_list != []
-  - debug:
-      msg:
-        - 'Active AVM IDs:'
-        - "{{ active_avmid_list|join(',') }}"
-        - ''
-        - 'Active devices:'
-        - "{{ active_device_list|join(',') }}"
-    when: check_devsim | default(false) | bool
+    when:
+      - not check_devsim | default(false) | bool
+      - bad_avmid_list != []
   tags: [ 'never', 'devsim' ]

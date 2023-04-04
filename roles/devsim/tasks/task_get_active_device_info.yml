@@ -1,11 +1,18 @@
 ---
 # tasks to get the device info from AVM file
 - block:
-  - name: get device ID from {{ avm_file }}
+  - name: get device info from {{ avm_file }}
     ansible.builtin.shell: |
       grep '^    <key name="' {{ avm_file }} | cut -d '"' -f2
-    register: reg_dev
-  - name: define active_device_list
+      grep -E '^      <entry name="ssh"|^        <entry name="ips"|Username|Password|netconfFile|walkFile' {{ avm_file }}
+    register: reg_devinfo
+  - name: define active device info lists
     ansible.builtin.set_fact:
-      active_device_list: "{{ active_device_list|default([]) + [reg_dev.stdout] }}"
+      active_device_list: "{{ active_device_list|default([]) + [reg_devinfo.stdout_lines[0]] }}"
+      active_ip_list: "{{ active_ip_list|default([]) + [reg_devinfo.stdout_lines|select('search', '\"ips\"')|regex_replace('^.*ips\">(.*)</e.*$','\\1')] }}"
+      active_username_list: "{{ active_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Username')|regex_replace('^.*Username\">(.*)</e.*$','\\1')] }}"
+      active_password_list: "{{ active_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Password')|regex_replace('^.*Password\">(.*)</e.*$','\\1')] }}"
+      active_ssh_list: "{{ active_ssh_list|default([]) + [reg_devinfo.stdout_lines|select('search','ssh')|length == 1] }}"
+      active_netconf_list: "{{ active_netconf_list|default([]) + [reg_devinfo.stdout_lines|select('search','netconfFile')|length == 1] }}"
+      active_snmp_list: "{{ active_snmp_list|default([]) + [reg_devinfo.stdout_lines|select('search','walkFile')|length == 1] }}"
   tags: [ 'never', 'devsim' ]

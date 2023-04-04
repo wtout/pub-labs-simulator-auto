@@ -25,5 +25,28 @@
       loop: "{{ active_avmid_list }}"
       loop_control:
         loop_var: id_item
+    - name: define active_dev_info
+      ansible.builtin.set_fact:
+        active_dev_info: "{{ active_dev_info|default(['Product,Address,SNMP,SSH,NetConf,AVM,Username,Password']) + [([active_item.0] + active_item.1|flatten)|join(',')] }}"
+      loop: "{{ mylists }}"
+      loop_control:
+        loop_var: active_item
+        label: "{{ active_item|flatten }}"
+      vars:
+        mylists: "{{ active_device_list|zip(active_ip_list|zip(active_snmp_list|zip(active_ssh_list|zip(active_netconf_list|zip(active_avmid_list|zip(active_username_list|zip(active_password_list))))))) }}"
+    - name: write active device info to file
+      ansible.builtin.copy:
+        content: "{{ active_dev_info|join('\n') }}"
+        dest: "{{ auto_dir }}/active_simulated_devices.csv"
+      delegate_to: localhost
+    - name: define active_id_ip
+      ansible.builtin.set_fact:
+        active_id_ip: "{{ active_id_ip|default([]) + [([active_item.0] + active_item.1)|join(' || ')] }}"
+      loop: "{{ active_avmid_list|zip(active_device_list|zip(active_ip_list)) }}"
+      loop_control:
+        loop_var: active_item
+        label: "{{ active_item|flatten }}"
+    - debug:
+        msg: "{{ ['Active AVM ID || Active Device ID || Active Device IP'] + active_id_ip }}"
     when: check_devsim | default(false) | bool
   tags: [ 'never', 'devsim' ]

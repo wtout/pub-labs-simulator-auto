@@ -487,7 +487,7 @@ function check_updates() {
 					if [[ "${ANSWER,,}" == "y" ]]
 					then
 						git reset -q --hard origin/"${localbranch}"
-						git pull "$(git config --get remote.origin.url | sed -e "s|\(//.*\)@|\1:${REPOPASS}@|")" &>"${PWD}"/.pullerr && sed -i "s|${REPOPASS}|xxxxx|" "${PWD}"/.pullerr
+						git pull "$(git config --get remote.origin.url | sed -e "s|\(//.*\)@|\1:${REPOPASS}@|")" "${localbranch}" &>"${PWD}"/.pullerr && sed -i "s|${REPOPASS}|xxxxx|" "${PWD}"/.pullerr
 						[[ ${?} == 0 ]] && echo -e "\nThe installation package has been updated. ${BOLD}Please re-run the script for the updates to take effect${NORMAL}\n\n"
 						[[ ${?} != 0 ]] && echo -e "\nThe installation package update has failed with the following error:\n\n${BOLD}$(cat "${PWD}"/.pullerr)${NORMAL}\n\n"
 						rm -f "${PWD}"/.pullerr

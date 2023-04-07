@@ -11,7 +11,7 @@
       chdir: /opt/{{ automation_reponame }}/simulator
   - name: define active_avmid_list
     ansible.builtin.set_fact:
-      active_avmid_list: "{{ reg_active.stdout_lines }}"
+      active_avmid_list: "{{ reg_active.stdout_lines|map('int')|sort|map('string') }}"
   - block:
     - name: define active_device_list
       ansible.builtin.set_fact:
@@ -27,16 +27,16 @@
         loop_var: id_item
     - name: define active_dev_info
       ansible.builtin.set_fact:
-        active_dev_info: "{{ active_dev_info|default(['Product,Address,SNMP,SSH,NetConf,AVM,Username,Password']) + [([active_item.0] + active_item.1|flatten)|join(',')] }}"
+        active_dev_info: "{{ active_dev_info|default(['Product,Address,SNMP,SSH,NetConf,AVM,Username,Password,SNMP Community']) + [([active_item.0] + active_item.1|flatten)|join(',')] }}"
       loop: "{{ mylists }}"
       loop_control:
         loop_var: active_item
         label: "{{ active_item|flatten }}"
       vars:
-        mylists: "{{ active_device_list|zip(active_ip_list|zip(active_snmp_list|zip(active_ssh_list|zip(active_netconf_list|zip(active_avmid_list|zip(active_username_list|zip(active_password_list))))))) }}"
+        mylists: "{{ active_device_list|zip(active_ip_list|zip(active_snmp_list|zip(active_ssh_list|zip(active_netconf_list|zip(active_avmid_list|zip(active_username_list|zip(active_password_list|zip(active_community_list)))))))) }}"
     - name: write active device info to file
       ansible.builtin.copy:
-        content: "{{ active_dev_info|join('\n') }}"
+        content: "{{ active_dev_info|join('\n')|replace('True','yes')|replace('False','no') }}"
         dest: "{{ auto_dir }}/active_simulated_devices.csv"
       delegate_to: localhost
     - name: define active_id_ip

@@ -1,6 +1,6 @@
 device_list:
-  - {'type': 'catalyst', 'id': '3640', 'num': '100', 'username': 'cisco', 'password': 'cisco', 'ssh': 'true', 'snmp': 'true'}
-  - {'type': 'catalyst', 'id': 'ws-c3550g-24', 'num': '200', 'username': 'cisco', 'password': 'cisco', 'ssh': 'true', 'snmp': 'true'}
-  - {'type': 'catalyst', 'id': 'ws-c3560g-48ts', 'num': '300', 'username': 'cisco', 'password': 'cisco', 'ssh': 'true', 'snmp': 'true'}
-  - {'type': 'catalyst', 'id': 'ws-c3750g-24t', 'num': '400', 'username': 'cisco', 'password': 'cisco', 'ssh': 'true', 'snmp': 'true'}
-  - {'type': 'catalyst', 'id': 'cisco7613', 'num': '500', 'username': 'cisco', 'password': 'cisco', 'ssh': 'true', 'snmp': 'true'}
+  - {'type': 'catalyst', 'id': '3640', 'num': '100', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'community': 'cisco1'}
+  - {'type': 'catalyst', 'id': 'ws-c3550g-24', 'num': '200', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'community': 'cisco1'}
+  - {'type': 'catalyst', 'id': 'ws-c3560g-48ts', 'num': '300', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'community': 'cisco1'}
+  - {'type': 'catalyst', 'id': 'ws-c3750g-24t', 'num': '400', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'community': 'cisco1'}
+  - {'type': 'catalyst', 'id': 'cisco7613', 'num': '500', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'community': 'cisco1'}

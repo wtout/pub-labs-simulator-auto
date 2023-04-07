@@ -17,13 +17,29 @@
       ansible.builtin.shell:
         sh runavm.sh {{ first_available_id }} {{ first_available_id }} &
       register: reg_start
+      failed_when: reg_start.stderr is search('file not found')
       no_log: yes
       args:
         chdir: /opt/{{ automation_reponame }}/simulator
       when: first_available_id not in active_avmid_list
     rescue:
     - debug:
-        msg: "{{ reg_start }}"
+        msg: "{{ reg_start.stderr_lines }}"
+    - name: stop AVM {{ first_available_id }}
+      ansible.builtin.shell:
+        sh stopsim.sh {{ first_available_id }}
+      register: reg_stop
+      no_log: yes
+      args:
+        chdir: /opt/{{ automation_reponame }}/simulator
+    - name: delete avm{{ first_available_id }}.xml
+      ansible.builtin.file:
+        path: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ first_available_id }}.xml"
+        state: absent
+    - name: delete dummy{{ first_available_id }} interface
+      community.general.nmcli:
+        conn_name: "dummy{{ first_available_id }}"
+        state: absent
     when: avm_action == 'start'
   - block:
     - block:

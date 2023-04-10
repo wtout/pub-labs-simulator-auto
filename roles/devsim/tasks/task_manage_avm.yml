@@ -40,6 +40,9 @@
       community.general.nmcli:
         conn_name: "dummy{{ first_available_id }}"
         state: absent
+    - name: define first_available_id
+      ansible.builtin.set_fact:
+        first_available_id: "{{ '' }}"
     when: avm_action == 'start'
   - block:
     - block:

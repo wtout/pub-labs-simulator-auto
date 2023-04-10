@@ -16,6 +16,14 @@
     - name: define active_device_list
       ansible.builtin.set_fact:
         active_device_list: []
+        active_dev_info: []
+        active_ip_list: []
+        active_snmp_list: []
+        active_ssh_list: []
+        active_netconf_list: []
+        active_username_list: []
+        active_password_list: []
+        active_community_list: []
       when: active_avmid_list == []
     - include_tasks:
         file: task_get_active_device_info.yml
@@ -47,6 +55,6 @@
         loop_var: active_item
         label: "{{ active_item|flatten }}"
     - debug:
-        msg: "{{ ['Active AVM ID || Active Device ID || Active Device IP'] + active_id_ip }}"
+        msg: "{{ ['Active AVM ID || Active Device ID || Active Device IP'] + active_id_ip|default([]) }}"
     when: check_devsim | default(false) | bool
   tags: [ 'never', 'devsim' ]

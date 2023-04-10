@@ -5,13 +5,13 @@
     - name: define first_available_ip
       ansible.builtin.set_fact:
         first_available_ip: "{{ host_network|ansible.utils.ipaddr('next_usable') }}"
-    when: active_avmid_list == []
+    when: active_avmid_list == [] or first_available_id|int == first_dummy_interface_id
     vars:
       host_network: "{{ hostvars[inventory_hostname]['build']['secondary' if 'dr' in group_names else 'primary']['networks'][inventory_hostname[-2:]|int -1] }}"
   - block:
-    - name: get IP from highest AVM ID
+    - name: get IP from {{ 'AVM ID ' + (first_available_id|int - 1)|string if device.num|int == 1 else 'highest AVM ID' }}
       ansible.builtin.shell: |
-        grep "^\s*<entry name=\"ips" /opt/{{ automation_reponame }}/simulator/registry/avm{{ active_avmid_list|max }}.xml
+        grep "^\s*<entry name=\"ips" /opt/{{ automation_reponame }}/simulator/registry/avm{{ first_available_id|int -1 if device.num|int == 1 else active_avmid_list|max }}.xml
       register: reg_used_ip
       check_mode: no
     - name: define first_available_ip
@@ -21,5 +21,7 @@
         ips: "{{ reg_used_ip.stdout|regex_replace('^.*ips\">(.*)</e.*$','\\1')|split('-') }}"
         uip: "{{ ips|first }}"
         nip: "{{ ips|last }}"
-    when: active_avmid_list != []
+    when:
+      - active_avmid_list != []
+      - first_available_id|int > first_dummy_interface_id
   tags: [ 'never', 'devsim' ]

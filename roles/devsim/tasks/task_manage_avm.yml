@@ -14,8 +14,8 @@
         ip6: 2001:db8:2::1/64
         state: present
     - name: start AVM {{ first_available_id }}
-      ansible.builtin.shell:
-        sh runavm.sh {{ first_available_id }} {{ first_available_id }} &
+      ansible.builtin.shell: |
+        /opt/{{ automation_reponame }}/jre1.8.0_60/bin/java -d64 -Dsun.net.httpserver.idleInterval=1600 -d64 -cp lib/*:simulator.jar: -Xmx{{ '64' if device.sshdevice.ssh|default(false)|bool else '32' }}m -Xms8m  com.sheer.tools.simulator.AVM -a {{ first_available_id }} -dummy {{ first_available_id }} &
       register: reg_start
       failed_when: reg_start.stderr is search('file not found')
       no_log: yes
@@ -27,11 +27,9 @@
         msg: "{{ reg_start.stderr_lines }}"
     - name: stop AVM {{ first_available_id }}
       ansible.builtin.shell:
-        sh stopsim.sh {{ first_available_id }}
+        kill -9 $(ps -ef | grep "AVM -a {{ first_available_id }}" | grep -v grep | awk '{print $2}')
       register: reg_stop
       no_log: yes
-      args:
-        chdir: /opt/{{ automation_reponame }}/simulator
     - name: delete avm{{ first_available_id }}.xml
       ansible.builtin.file:
         path: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ first_available_id }}.xml"
@@ -48,11 +46,9 @@
     - block:
       - name: stop AVM {{ avm_id }}
         ansible.builtin.shell:
-          sh stopsim.sh {{ avm_id }}
+          kill -9 $(ps -ef | grep "AVM -a {{ avm_id }}" | grep -v grep | awk '{print $2}')
         register: reg_stop
         no_log: yes
-        args:
-          chdir: /opt/{{ automation_reponame }}/simulator
       - name: delete avm{{ avm_id }}.xml
         ansible.builtin.file:
           path: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avm_id }}.xml"

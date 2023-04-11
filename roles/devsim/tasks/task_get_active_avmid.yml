@@ -1,14 +1,12 @@
 ---
 # tasks to get the list of active AVM IDs
 - block:
-  - name: find active AVM files/IDs
+  - name: find active AVM file IDs
     ansible.builtin.shell:
-      sh whoisavm.sh
+      ps -ef | grep AVM | grep -v grep | awk '{print $18}'
     register: reg_active
     check_mode: no
     no_log: yes
-    args:
-      chdir: /opt/{{ automation_reponame }}/simulator
   - name: define active_avmid_list
     ansible.builtin.set_fact:
       active_avmid_list: "{{ reg_active.stdout_lines|map('int')|sort|map('string') }}"

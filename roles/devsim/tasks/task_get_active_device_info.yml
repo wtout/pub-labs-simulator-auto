@@ -5,7 +5,7 @@
     ansible.builtin.shell: |
       grep '^    <key name="' {{ avm_file }} | cut -d '"' -f2
       sed -n '/SNMP community/{n;p;}' {{ avm_file }}
-      grep -E '^      <entry name="ssh"|^        <entry name="ips"|Username|Password|netconfFile|walkFile' {{ avm_file }}
+      grep -E '^      <entry name="ssh"|^        <entry name="ips"|^      <entry name="Username"|Password|netconfFile|walkFile' {{ avm_file }}
     register: reg_devinfo
   - name: define active device info lists
     ansible.builtin.set_fact:

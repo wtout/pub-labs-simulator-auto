@@ -37,16 +37,10 @@
       that:
         - creds_status | default('') is not search('invalid')
       fail_msg: "{{ creds_status | default('') }}"
-  - include_tasks: task_get_avmid_lists.yml
+  - include_tasks: task_check_devsim.yml
+    when: check_devsim | default(false) | bool
   - include_tasks: task_start_devsim.yml
     when: start_devsim | default(false) | bool
   - include_tasks: task_stop_devsim.yml
     when: stop_devsim | default(false) | bool
-  - debug:
-      msg:
-        - 'The following AVM IDs do not correspond to AVM files'
-        - "{{ bad_avmid_list|join(',') }}"
-    when:
-      - not check_devsim | default(false) | bool
-      - bad_avmid_list != []
   tags: [ 'never', 'devsim' ]

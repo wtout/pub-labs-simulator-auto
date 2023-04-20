@@ -45,10 +45,6 @@ device_list:
   - {'type': 'catalyst', 'id': 'n5k-c5010p-bf-sup', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'n5k-c5548up', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'n9k-c9396px', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
-  - {'type': 'catalyst', 'id': 'ws-c3850-48u-e', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
-  - {'type': 'catalyst', 'id': 'ws-c3850-48u-l', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
-  - {'type': 'catalyst', 'id': 'ws-c3850-12xs', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
-  - {'type': 'catalyst', 'id': 'ws-c3850-24u', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'ws-c2960-24pc-s', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'ws-c2960-24tt-l', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'ws-c2960-48tc-s', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
@@ -74,10 +70,10 @@ device_list:
   - {'type': 'catalyst', 'id': 'ws-c3750x-24', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'ws-c3750x-24s', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'ws-c3750x-48', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
-  - {'type': 'catalyst', 'id': 'ws-c3850-12xs', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
-  - {'type': 'catalyst', 'id': 'ws-c3850-24u', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'ws-c3850-48u-e', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'ws-c3850-48u-l', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
+  - {'type': 'catalyst', 'id': 'ws-c3850-12xs', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
+  - {'type': 'catalyst', 'id': 'ws-c3850-24u', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'ws-c4500x-16', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'ws-c4507r+e', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'type': 'catalyst', 'id': 'ws-c4507r', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}

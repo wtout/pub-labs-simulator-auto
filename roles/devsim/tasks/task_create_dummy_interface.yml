@@ -1,0 +1,11 @@
+---
+# tasks to create dummy interface
+- name: create dummy{{ int_id }} interface
+  community.general.nmcli:
+    conn_name: "dummy{{ int_id }}"
+    type: dummy
+    ip4: 192.0.0.1/24
+    ip6: 2001:db8:2::1/64
+    state: present
+  become: "{{ true if ansible_user != 'root' else false }}"
+  tags: [ 'never', 'devsim' ]

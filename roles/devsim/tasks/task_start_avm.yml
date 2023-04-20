@@ -1,0 +1,21 @@
+---
+# tasks to start avm simulation
+- block:
+  - name: start AVM {{ avm_id }}
+    ansible.builtin.shell: |
+      /opt/{{ automation_reponame }}/jre1.8.0_60/bin/java -d64 -Dsun.net.httpserver.idleInterval=1600 -d64 -cp lib/*:simulator.jar: -Xmx{{ max_heap_size }}m -Xms8m  com.sheer.tools.simulator.AVM -a {{ avm_id }} -dummy {{ avm_id }} &
+    register: reg_start
+    failed_when: reg_start.stderr is search('file not found|Invalid maximum heap size|heap space')
+    args:
+      chdir: /opt/{{ automation_reponame }}/simulator
+    become: "{{ true if ansible_user != 'root' else false }}"
+    no_log: yes
+  always:
+  - debug:
+      msg:
+        - "{{ dict_copy }}"
+    vars:
+      mystdout: "{{ reg_start.stdout|truncate(355, '...truncated output') }}"
+      mystdout_lines: "{{ reg_start.stdout_lines|join(',')|truncate(355, '...truncated output')|split(',') }}"
+      dict_copy: "{% set copy=reg_start.copy() %}{% set removed=copy.pop('stdout') %}{% set removed=copy.pop('stdout_lines') %}{% set _ = copy.update({'stdout': mystdout}) %}{% set _ = copy.update({'stdout_lines': mystdout_lines}) %}{{ copy }}"
+  tags: [ 'never', 'devsim' ]

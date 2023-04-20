@@ -75,7 +75,8 @@ vm_vars:
       intname: "{{ environment_definition.vm_setting.smlt.nic2.intname if (environment_definition.vm_setting.smlt.nic2.intname is defined and environment_definition.vm_setting.smlt.nic2.intname != none) else 'ens192' }}"
 
       # IP pool
-      ip_pool: {{ environment_definition.vm_setting.smlt.nic2.ip_pool if (environment_definition.vm_setting.smlt.nic2.ip_pool is defined and environment_definition.vm_setting.smlt.nic2.ip_pool != none) else primary_nic2_ip_list }}
+      ip_pool: {{ environment_definition.vm_setting.smlt.nic2.ip_pool if (environment_definition.vm_setting.smlt.nic2.ip_pool is defined and environment_definition.vm_setting.smlt.nic2.ip_pool != none) else [] }}
+#      ip_pool: {{ environment_definition.vm_setting.smlt.nic2.ip_pool if (environment_definition.vm_setting.smlt.nic2.ip_pool is defined and environment_definition.vm_setting.smlt.nic2.ip_pool != none) else primary_nic2_ip_list }}
 
       # IP fourth octet pool
       ip_octetpool: {{ environment_definition.vm_setting.smlt.nic2.ip_octetpool if (environment_definition.vm_setting.smlt.nic2.ip_octetpool is defined and environment_definition.vm_setting.smlt.nic2.ip_octetpool != none) else [] }}

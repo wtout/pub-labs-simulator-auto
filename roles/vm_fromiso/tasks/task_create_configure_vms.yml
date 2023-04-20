@@ -18,5 +18,6 @@
   - name: flush handlers
     meta: flush_handlers
 
+  - include_tasks: task_increase_max_pid_number.yml
   - include_tasks: task_update_os.yml
   tags: vm_creation

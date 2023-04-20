@@ -1,9 +1,9 @@
 ---
 # Tasks to create the avm file
-- name: Create AVM file
+- name: Create avm{{ avm_id }}.xml file
   template:
     src: templates/avm.xml.tmpl
-    dest: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ first_available_id }}.xml"
+    dest: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avm_id }}.xml"
     owner: root
     group: root
     mode: 0644

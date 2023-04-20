@@ -36,7 +36,7 @@
 {% endif %}
 {% endif %}
 {% if device.ssh|default(false)|bool %}
-        <entry name="recordFile">../recordings/{{ device.type }}/telnet/{{ device.id }}.cli</entry>
+        <entry name="recordFile">../recordings/{{ device.type }}/cli/{{ device.id }}.cli</entry>
 {% endif %}
       </key>
     </key>

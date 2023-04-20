@@ -13,5 +13,7 @@
         good_avmid_list: "{{ AVMLIST|split(',')|list | intersect(active_avmid_list)|map('int')|sort|map('string') }}"
         bad_avmid_list: "{{ AVMLIST|split(',')|list | difference(active_avmid_list)|map('int')|sort|map('string') }}"
       when: AVMLIST|default('') != ''
-    when: not check_devsim | default(false) | bool
+    when:
+      - active_avmid_list != []
+      - not check_devsim | default(false) | bool
   tags: [ 'never', 'devsim' ]

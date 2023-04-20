@@ -2,7 +2,7 @@
 # tasks to start device simulation
 - block:
   - include_tasks:
-      file: task_manage_avm.yml
+      file: task_simulate_device.yml
       apply:
         vars:
           device: "{{ device_item }}"

@@ -1,13 +1,29 @@
 ---
 # tasks to stop device simulation
 - block:
+  - include_tasks: task_get_active_avmid.yml
+  - name: define avmid lists
+    ansible.builtin.set_fact:
+      good_avmid_list: "{{ active_avmid_list|map('int')|sort|map('string') }}"
+      bad_avmid_list: []
+    when: AVMLIST|default('') == ''
+  - name: define avmid lists
+    ansible.builtin.set_fact:
+      good_avmid_list: "{{ AVMLIST|split(',')|list | intersect(active_avmid_list)|map('int')|sort|map('string') }}"
+      bad_avmid_list: "{{ AVMLIST|split(',')|list | difference(active_avmid_list)|map('int')|sort|map('string') }}"
+    when: AVMLIST|default('') != ''
   - include_tasks:
-      file: task_manage_avm.yml
+      file: task_remove_device.yml
       apply:
         vars:
-          avm_id: "{{ id_item }}"
-          avm_action: 'stop'
+          good_avm_id: "{{ id_item }}"
     loop: "{{ good_avmid_list }}"
     loop_control:
       loop_var: id_item
+  - debug:
+      msg:
+        - 'The following AVM IDs do not correspond to AVM files'
+        - "{{ bad_avmid_list|join(',') }}"
+    when:
+      - bad_avmid_list != []
   tags: [ 'never', 'devsim' ]

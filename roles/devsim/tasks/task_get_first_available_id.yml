@@ -44,5 +44,4 @@
         - device.num|int == 1
     when:
       - active_avmid_list != []
-
   tags: [ 'never', 'devsim' ]

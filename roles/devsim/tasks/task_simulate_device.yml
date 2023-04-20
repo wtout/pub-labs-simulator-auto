@@ -1,0 +1,99 @@
+---
+# tasks to simulate a device
+- block:
+  - include_tasks: task_get_active_avmid.yml
+  - include_tasks: task_get_first_available_id.yml
+  - include_tasks:
+      file: task_get_first_available_ip.yml
+      apply:
+        vars:
+          avm_id: "{{ first_available_id }}"
+  - include_tasks:
+      file: task_create_avm_file.yml
+      apply:
+        vars:
+          avm_id: "{{ first_available_id }}"
+  - include_tasks:
+      file: task_create_dummy_interface.yml
+      apply:
+        vars:
+          int_id: "{{ first_available_id }}"
+  - block:
+    - include_tasks:
+        file: task_start_avm.yml
+        apply:
+          vars:
+            avm_id: "{{ first_available_id }}"
+            max_heap_size: "{{ new_heap }}"
+      vars:
+        adj_heap: "{{ max_heap|int + 2 * (first_available_id|int - 100) }}"
+        new_heap: "{{ [adj_heap|int,2048]|min }}"
+    rescue:
+    - include_tasks:
+        file: task_stop_avm.yml
+        apply:
+          vars:
+            avm_id: "{{ first_available_id }}"
+    - block:
+      - include_tasks:
+          file: task_delete_avm_file.yml
+          apply:
+            vars:
+              avm_id: "{{ first_available_id }}"
+      - include_tasks:
+          file: task_delete_dummy_interface.yml
+          apply:
+            vars:
+              int_id: "{{ first_available_id }}"
+      when: reg_start.stderr is search('file not found')
+    - include_tasks:
+        file: task_start_avm.yml
+        apply:
+          vars:
+            avm_id: "{{ first_available_id }}"
+            max_heap_size: "{{ [new_heap|int,256]|max }}"
+      vars:
+        adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
+        new_heap: "{{ [adj_heap|int,2048]|min }}"
+      when: reg_start.stderr is search('Invalid maximum heap size|heap space')
+  - block:
+    - name: get highest used IP
+      ansible.builtin.shell: |
+        ip a show dummy{{ first_available_id }}|grep inet|tail -1|awk '{print $2}'|cut -d '/' -f1
+      register: reg_highest_ip
+      become: "{{ true if ansible_user != 'root' else false }}"
+      check_mode: no
+    - block:
+      - include_tasks:
+          file: task_verify_ssh_connection.yml
+          apply:
+            vars:
+              ip: "{{ reg_highest_ip.stdout }}"
+              username: "{{ device.username }}"
+              password: "{{ device.password }}"
+      rescue:
+      - include_tasks:
+          file: task_stop_avm.yml
+          apply:
+            vars:
+              avm_id: "{{ first_available_id }}"
+      - include_tasks:
+          file: task_start_avm.yml
+          apply:
+            vars:
+              avm_id: "{{ first_available_id }}"
+              max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + 256]|max }}"
+        vars:
+          adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
+          new_heap: "{{ [adj_heap|int,2048]|min }}"
+      - include_tasks:
+          file: task_verify_ssh_connection.yml
+          apply:
+            vars:
+              ip: "{{ reg_highest_ip.stdout }}"
+              username: "{{ device.username }}"
+              password: "{{ device.password }}"
+      when: reg_start is succeeded
+  vars:
+    max_heap: "{{ '64' if device.ssh|default(false)|bool else '32' }}"
+  tags: [ 'never', 'devsim' ]

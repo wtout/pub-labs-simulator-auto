@@ -141,23 +141,23 @@ with the _``system-name``_ being the name of the system definition file from "Sy
 
 - ``play_check.sh`` in combination with the --tags devsim, enables the user to check the status of simulated devices described in AVM file(s)
 
-**_Example1_**: to check what AVM IDs are available and what IDs are currently active (started), run the script as follows
+**_Example1_**: to check what AVM IDs are currently active (started), run the script as follows
 
     $> sh Bash/play_check.sh --envname <system-name> --tags devsim
 
-**_Example2_**: to start all available AVM IDs, run the script as follows
+***Note**: A complete list of active device simulation details is saved to the “active_simulated_devices.csv” file under the automation root directory*
 
-    $> sh Bash/play_deploy.sh --envname <system-name> --tags devsim
+**_Example2_**: to start/create new AVM IDs, run the script as follows
 
-**_Example3_**: to start specific AVM IDs, run the script as follows
+    $> sh Bash/play_deploy.sh --envname <system-name> --tags devsim -e @@<device_list file name>
 
-    $> sh Bash/play_deploy.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
+***Note**: Use the devices.yml file as a template. The file name can be changed*
 
-**_Example4_**: to stop specific AVM IDs, run the script as follows
+**_Example3_**: to stop specific AVM IDs, run the script as follows
 
     $> sh Bash/play_rollback.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
 
-**_Example5_**: to stop all available AVM IDs, run the script as follows
+**_Example4_**: to stop all available AVM IDs, run the script as follows
 
     $> sh Bash/play_rollback.sh --envname <system-name> --tags devsim
 

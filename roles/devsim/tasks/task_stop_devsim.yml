@@ -17,7 +17,7 @@
       apply:
         vars:
           good_avm_id: "{{ id_item }}"
-    loop: "{{ good_avmid_list }}"
+    loop: "{{ good_avmid_list|sort(reverse=True) }}"
     loop_control:
       loop_var: id_item
   - debug:

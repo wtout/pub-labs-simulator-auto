@@ -13,13 +13,17 @@
       <key name="ipList">
         <entry name="ips">{{ device.ip }}-{{ device.num }}</entry>
       </key>
-      <key name="cisco">
-{% if device.snmp %}
-        <entry name="walkFile">../recordings/{{ device.type }}/snmp/{{ device.id }}.snmp</entry>
+      <!-- SNMP community name -->
+      <key name="{{ device.community|default('cisco') }}">
+        <entry name="prompt">{HOST}#</entry>
+{% if device.snmp|default(false)|bool %}
+        <entry name="walkFile">../recordings/snmp/{{ device.id }}.snmp</entry>
 {% endif %}
-        <entry name="prompt">{HOST} &gt;</entry>
-{% if device.ssh %}
-        <entry name="recordFile">../recordings/{{ device.type }}/cli/{{ device.id }}.cli</entry>
+{% if device.ssh|default(false)|bool %}
+        <entry name="recordFile">../recordings/cli/{{ device.id }}.cli</entry>
+{% endif %}
+{% if device.netconf|default(false)|bool %}
+        <entry name="netconfFile">../recordings/nconf/{{ device.id }}.nconf</entry>
 {% endif %}
       </key>
     </key>

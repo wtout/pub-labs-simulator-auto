@@ -1,0 +1,20 @@
+---
+# tasks to get the device info from AVM file
+- block:
+  - name: get device info from {{ avm_file }}
+    ansible.builtin.shell: |
+      grep '^    <key name="' {{ avm_file }} | cut -d '"' -f2
+      sed -n '/SNMP community/{n;p;}' {{ avm_file }}
+      grep -E '^      <entry name="ssh"|^        <entry name="ips"|^      <entry name="Username"|Password|netconfFile|walkFile' {{ avm_file }}
+    register: reg_devinfo
+  - name: define read device info lists
+    ansible.builtin.set_fact:
+      read_device_list: "{{ read_device_list|default([]) + [reg_devinfo.stdout_lines[0]] }}"
+      read_ip_list: "{{ read_ip_list|default([]) + [reg_devinfo.stdout_lines|select('search', '\"ips\"')|regex_replace('^.*ips\">(.*)</e.*$','\\1')] }}"
+      read_ssh_list: "{{ read_ssh_list|default([]) + [reg_devinfo.stdout_lines|select('search','ssh')|length == 1] }}"
+      read_username_list: "{{ read_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Username')|regex_replace('^.*Username\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','ssh')|length == 1 else ''] }}"
+      read_password_list: "{{ read_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Password')|regex_replace('^.*Password\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','ssh')|length == 1 else ''] }}"
+      read_netconf_list: "{{ read_netconf_list|default([]) + [reg_devinfo.stdout_lines|select('search','netconfFile')|length == 1] }}"
+      read_snmp_list: "{{ read_snmp_list|default([]) + [reg_devinfo.stdout_lines|select('search','walkFile')|length == 1] }}"
+      read_community_list: "{{ read_community_list|default([]) + [reg_devinfo.stdout_lines|select('search','key name')|regex_replace('^.*=\"(.*)\">.*$','\\1') if reg_devinfo.stdout_lines|select('search','walkFile')|length == 1 else ''] }}"
+  tags: [ 'never', 'devsim' ]

@@ -35,12 +35,12 @@
           - dvsm_vm_creds.msg is search('Invalid/incorrect')
   - assert:
       that:
-        - creds_status | default('') is not search('invalid')
-      fail_msg: "{{ creds_status | default('') }}"
+        - creds_status|default('') is not search('invalid')
+      fail_msg: "{{ creds_status|default('') }}"
   - include_tasks: task_check_devsim.yml
-    when: check_devsim | default(false) | bool
+    when: check_devsim|default(false)|bool
   - include_tasks: task_start_devsim.yml
-    when: start_devsim | default(false) | bool
+    when: deploy_devsim|default(false)|bool or start_devsim|default(false)|bool
   - include_tasks: task_stop_devsim.yml
-    when: stop_devsim | default(false) | bool
+    when: rollback_devsim|default(false)|bool or stop_devsim|default(false)|bool
   tags: [ 'never', 'devsim' ]

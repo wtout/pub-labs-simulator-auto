@@ -1,0 +1,94 @@
+---
+# tasks to simulate a device
+- block:
+  - include_tasks: task_get_active_avmid.yml
+  - ansible.builtin.debug:
+      msg: "The avm{{ avmid }}.xml file is already started. Nothing to do"
+    when: active_avmid_list is contains(avmid)
+  - block:
+    - name: check if ssh is enabled in avm{{ avmid }}.xml
+      ansible.builtin.lineinfile:
+        path: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avmid }}.xml"
+        line: '      <entry name="ssh">2</entry>'
+      become: "{{ true if ansible_user != 'root' else false }}"
+      register: reg_ssh_enabled
+      failed_when: reg_ssh_enabled is changed
+      ignore_errors: true
+      check_mode: no
+    - block:
+      - name: get SSH user credentials from avm{{ avmid }}.xml
+        ansible.builtin.shell:
+          grep -E '^      <entry name="Username"|Password' /opt/{{automation_reponame }}/simulator/registry/avm{{ avmid }}.xml
+        register: reg_creds
+        check_mode: no
+      - include_tasks:
+          file: task_start_avm.yml
+          apply:
+            vars:
+              avm_id: "{{ avmid }}"
+              max_heap_size: "{{ new_heap }}"
+        vars:
+          adj_heap: "{{ max_heap|int + 2 * (avmid|int - 100) }}"
+          new_heap: "{{ [adj_heap|int,2048]|min }}"
+      rescue:
+      - include_tasks:
+          file: task_stop_avm.yml
+          apply:
+            vars:
+              avm_id: "{{ avmid }}"
+      - ansible.builtin.debug:
+          msg: "{{ reg_start.stderr }}"
+        when: reg_start.stderr is search('file not found')
+      - include_tasks:
+          file: task_start_avm.yml
+          apply:
+            vars:
+              avm_id: "{{ avmid }}"
+              max_heap_size: "{{ [new_heap|int,256]|max }}"
+        vars:
+          adj_heap: "{{ max_heap|int + 8 * (avmid|int - 100) }}"
+          new_heap: "{{ [adj_heap|int,2048]|min }}"
+        when: reg_start.stderr is search('Invalid maximum heap size|heap space')
+    - block:
+      - name: get highest used IP
+        ansible.builtin.shell: |
+          ip a show dummy{{ avmid }}|grep inet|tail -1|awk '{print $2}'|cut -d '/' -f1
+        register: reg_highest_ip
+        become: "{{ true if ansible_user != 'root' else false }}"
+        check_mode: no
+      - block:
+        - include_tasks:
+            file: task_verify_ssh_connection.yml
+            apply:
+              vars:
+                ip: "{{ reg_highest_ip.stdout }}"
+                username: "{{ reg_creds.stdout_lines|select('search','Username')|regex_replace('^.*Username\">(.*)</e.*$','\\1') }}"
+                password: "{{ reg_creds.stdout_lines|select('search','Password')|regex_replace('^.*Password\">(.*)</e.*$','\\1') }}"
+        rescue:
+        - include_tasks:
+            file: task_stop_avm.yml
+            apply:
+              vars:
+                avm_id: "{{ avmid }}"
+        - include_tasks:
+            file: task_start_avm.yml
+            apply:
+              vars:
+                avm_id: "{{ avmid }}"
+                max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320)]|max }}"
+          vars:
+            adj_heap: "{{ max_heap|int + 8 * (avmid|int - 100) }}"
+            new_heap: "{{ [adj_heap|int,2048]|min }}"
+        - include_tasks:
+            file: task_verify_ssh_connection.yml
+            apply:
+              vars:
+                ip: "{{ reg_highest_ip.stdout }}"
+                username: "{{ reg_creds.stdout_lines|select('search','Username')|regex_replace('^.*Username\">(.*)</e.*$','\\1') }}"
+                password: "{{ reg_creds.stdout_lines|select('search','Password')|regex_replace('^.*Password\">(.*)</e.*$','\\1') }}"
+        when: reg_start is succeeded
+      when: reg_ssh_enabled is succeeded
+    when: active_avmid_list is not contains(avmid)
+  vars:
+    max_heap: "{{ '64' if device.ssh|default(false)|bool else '32' }}"
+  tags: [ 'never', 'devsim' ]

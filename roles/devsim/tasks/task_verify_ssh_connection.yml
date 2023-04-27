@@ -5,9 +5,11 @@
     sshpass -p {{ password }} ssh {{ username }}@{{ ip }} 'exit'
   register: reg_ssh
   until: reg_ssh is succeeded
+  retries: 5
   failed_when:
     - reg_ssh.rc != 0
     - reg_ssh.rc != 6
+    - reg_ssh.rc != 255
   check_mode: no
   delegate_to: localhost
   tags: [ 'never', 'devsim' ]

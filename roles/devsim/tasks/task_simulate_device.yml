@@ -82,7 +82,7 @@
           apply:
             vars:
               avm_id: "{{ first_available_id }}"
-              max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + 256]|max }}"
+              max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320)]|max }}"
         vars:
           adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
           new_heap: "{{ [adj_heap|int,2048]|min }}"
@@ -94,6 +94,7 @@
               username: "{{ device.username }}"
               password: "{{ device.password }}"
       when: reg_start is succeeded
+    when: device.ssh|default(false)|bool
   vars:
     max_heap: "{{ '64' if device.ssh|default(false)|bool else '32' }}"
   tags: [ 'never', 'devsim' ]

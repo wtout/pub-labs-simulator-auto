@@ -3,7 +3,7 @@
 - name: increase max PID number
   ansible.posix.sysctl:
     name: kernel.pid_max
-    value: '100000'
+    value: '4194304'
     sysctl_set: true
     reload: true
-  tags: vm_ccreation
+  tags: vm_creation

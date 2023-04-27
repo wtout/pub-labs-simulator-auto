@@ -1,19 +1,20 @@
 ---
 # tasks to get the avmid lists
 - block:
-  - include_tasks: task_get_active_avmid.yml
+  - include_tasks: task_get_file_avmid.yml
   - block:
-    - name: define avmid lists
-      ansible.builtin.set_fact:
-        good_avmid_list: "{{ active_avmid_list|map('int')|sort|map('string') }}"
-        bad_avmid_list: []
+    - block:
+      - include_tasks: task_get_active_avmid.yml
+      - name: define avmid lists
+        ansible.builtin.set_fact:
+          good_avmid_list: "{{ file_avmid_list | difference(file_avmid_list)|map('int')|sort|map('string') }}"
+          bad_avmid_list: []
       when: AVMLIST|default('') == ''
     - name: define avmid lists
       ansible.builtin.set_fact:
-        good_avmid_list: "{{ AVMLIST|split(',')|list | intersect(active_avmid_list)|map('int')|sort|map('string') }}"
-        bad_avmid_list: "{{ AVMLIST|split(',')|list | difference(active_avmid_list)|map('int')|sort|map('string') }}"
+        good_avmid_list: "{{ AVMLIST|split(',')|list | intersect(file_avmid_list)|map('int')|sort|map('string') }}"
+        bad_avmid_list: "{{ AVMLIST|split(',')|list | difference(file_avmid_list)|map('int')|sort|map('string') }}"
       when: AVMLIST|default('') != ''
     when:
-      - active_avmid_list != []
-      - not check_devsim | default(false) | bool
+      - file_avmid_list != []
   tags: [ 'never', 'devsim' ]

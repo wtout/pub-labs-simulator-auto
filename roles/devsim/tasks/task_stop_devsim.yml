@@ -13,6 +13,15 @@
       bad_avmid_list: "{{ AVMLIST|split(',')|list | difference(active_avmid_list)|map('int')|sort|map('string') }}"
     when: AVMLIST|default('') != ''
   - include_tasks:
+      file: task_stop_avm.yml
+      apply:
+        vars:
+          avm_id: "{{ id_item }}"
+    loop: "{{ good_avmid_list|sort(reverse=True) }}"
+    loop_control:
+      loop_var: id_item
+    when: stop_devsim|default(false)|bool
+  - include_tasks:
       file: task_remove_device.yml
       apply:
         vars:
@@ -20,9 +29,10 @@
     loop: "{{ good_avmid_list|sort(reverse=True) }}"
     loop_control:
       loop_var: id_item
+    when: rollback_devsim|default(false)|bool
   - debug:
       msg:
-        - 'The following AVM IDs do not correspond to AVM files'
+        - 'The following AVM IDs do not correspond to active AVM files'
         - "{{ bad_avmid_list|join(',') }}"
     when:
       - bad_avmid_list != []

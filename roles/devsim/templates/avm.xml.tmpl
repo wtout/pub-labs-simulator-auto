@@ -22,21 +22,15 @@
       </key>
       <!-- SNMP community name -->
       <key name="{{ device.community|default('cisco') }}">
-{% if device.netconf|default(false)|bool %}
-        <entry name="netconfFile">../recordings/{{ device.type }}/netconf/{{ device.id }}.nconf</entry>
-{% endif %}
-{% if device.snmp|default(false)|bool %}
-        <entry name="walkFile">../recordings/{{ device.type }}/snmp/{{ device.id }}.snmp</entry>
-{% endif %}
-{% if device.ssh|default(false)|bool %}
-{% if device.id|lower is search('air-') %}
-        <entry name="prompt">{HOST} &gt;</entry>
-{% else %}
         <entry name="prompt">{HOST}#</entry>
-{% endif %}
+{% if device.snmp|default(false)|bool %}
+        <entry name="walkFile">../recordings/snmp/{{ device.id }}.snmp</entry>
 {% endif %}
 {% if device.ssh|default(false)|bool %}
-        <entry name="recordFile">../recordings/{{ device.type }}/cli/{{ device.id }}.cli</entry>
+        <entry name="recordFile">../recordings/cli/{{ device.id }}.cli</entry>
+{% endif %}
+{% if device.netconf|default(false)|bool %}
+        <entry name="netconfFile">../recordings/nconf/{{ device.id }}.nconf</entry>
 {% endif %}
       </key>
     </key>

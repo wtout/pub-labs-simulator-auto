@@ -2,49 +2,87 @@
 # tasks to check simulation status
 - block:
   - include_tasks: task_get_active_avmid.yml
+  - include_tasks: task_get_file_avmid.yml
+  - name: define non_active_avmid_list
+    ansible.builtin.set_fact:
+      non_active_avmid_list: "{{ file_avmid_list | difference(active_avmid_list) }}"
   - block:
-    - name: define active_device_list
+    - name: initialize device info lists
       ansible.builtin.set_fact:
-        active_device_list: []
-        active_dev_info: []
-        active_ip_list: []
-        active_snmp_list: []
-        active_ssh_list: []
-        active_netconf_list: []
-        active_username_list: []
-        active_password_list: []
-        active_community_list: []
-      when: active_avmid_list == []
+        non_active_dev_info: []
+        read_device_list: []
+        read_ip_list: []
+        read_snmp_list: []
+        read_ssh_list: []
+        read_netconf_list: []
+        read_username_list: []
+        read_password_list: []
+        read_community_list: []
     - include_tasks:
-        file: task_get_active_device_info.yml
+        file: task_get_device_info.yml
         apply:
           vars:
             avm_file: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ id_item }}.xml"
-      loop: "{{ active_avmid_list }}"
+      loop: "{{ non_active_avmid_list }}"
       loop_control:
         loop_var: id_item
-    - name: define active_dev_info
+    - name: define non_active_id_ip
       ansible.builtin.set_fact:
-        active_dev_info: "{{ active_dev_info|default(['Product,Address,SNMP,SSH,NetConf,AVM,Username,Password,SNMP Community']) + [([active_item.0] + active_item.1|flatten)|join(',')] }}"
-      loop: "{{ mylists }}"
+        non_active_id_ip: "{{ non_active_id_ip|default([]) + [([task_item.0] + task_item.1)|join(' || ')] }}"
+      loop: "{{ non_active_avmid_list|zip(read_device_list|zip(read_ip_list)) }}"
       loop_control:
-        loop_var: active_item
-        label: "{{ active_item|flatten }}"
-      vars:
-        mylists: "{{ active_device_list|zip(active_ip_list|zip(active_snmp_list|zip(active_ssh_list|zip(active_netconf_list|zip(active_avmid_list|zip(active_username_list|zip(active_password_list|zip(active_community_list)))))))) }}"
-    - name: write active device info to file
-      ansible.builtin.copy:
-        content: "{{ active_dev_info|join('\n')|replace('True','yes')|replace('False','no') }}"
-        dest: "{{ auto_dir }}/active_simulated_devices.csv"
-      delegate_to: localhost
-    - name: define active_id_ip
-      ansible.builtin.set_fact:
-        active_id_ip: "{{ active_id_ip|default([]) + [([active_item.0] + active_item.1)|join(' || ')] }}"
-      loop: "{{ active_avmid_list|zip(active_device_list|zip(active_ip_list)) }}"
-      loop_control:
-        loop_var: active_item
-        label: "{{ active_item|flatten }}"
-    - debug:
-        msg: "{{ ['Active AVM ID || Active Device ID || Active Device IP'] + active_id_ip|default([]) }}"
-    when: check_devsim | default(false) | bool
+        loop_var: task_item
+        label: "{{ task_item|flatten }}"
+    when: non_active_avmid_list != []
+
+  - name: initialize device info lists
+    ansible.builtin.set_fact:
+      active_dev_info: []
+      read_device_list: []
+      read_ip_list: []
+      read_snmp_list: []
+      read_ssh_list: []
+      read_netconf_list: []
+      read_username_list: []
+      read_password_list: []
+      read_community_list: []
+  - include_tasks:
+      file: task_get_device_info.yml
+      apply:
+        vars:
+          avm_file: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ id_item }}.xml"
+    loop: "{{ active_avmid_list }}"
+    loop_control:
+      loop_var: id_item
+  - name: define active_dev_info
+    ansible.builtin.set_fact:
+      active_dev_info: "{{ active_dev_info|default(['Product,Address,SNMP,SSH,NetConf,AVM,Username,Password,SNMP Community']) + [([task_item.0] + task_item.1|flatten)|join(',')] }}"
+    loop: "{{ mylists }}"
+    loop_control:
+      loop_var: task_item
+      label: "{{ task_item|flatten }}"
+    vars:
+      mylists: "{{ read_device_list|zip(read_ip_list|zip(read_snmp_list|zip(read_ssh_list|zip(read_netconf_list|zip(active_avmid_list|zip(read_username_list|zip(read_password_list|zip(read_community_list)))))))) }}"
+  - name: write active device info to file
+    ansible.builtin.copy:
+      content: "{{ active_dev_info|join('\n')|replace('True','yes')|replace('False','no') }}"
+      dest: "{{ auto_dir }}/active_simulated_devices.csv"
+    delegate_to: localhost
+  - name: define active_id_ip
+    ansible.builtin.set_fact:
+      active_id_ip: "{{ active_id_ip|default([]) + [([task_item.0] + task_item.1)|join(' || ')] }}"
+    loop: "{{ active_avmid_list|zip(read_device_list|zip(read_ip_list)) }}"
+    loop_control:
+      loop_var: task_item
+      label: "{{ task_item|flatten }}"
+  - debug:
+    when: non_active_id_ip|default([]) != []
+  - debug:
+      msg:
+        - "{{ ['Non-Active AVM ID || Non-Active Device ID || Non-Active Device IP'] + non_active_id_ip|default([]) }}"
+        - "{{ ['Active AVM ID || Active Device ID || Active Device IP'] + active_id_ip|default([]) }}"
+    when: non_active_avmid_list != []
+  - debug:
+      msg: "{{ ['Active AVM ID || Active Device ID || Active Device IP'] + active_id_ip|default([]) }}"
+    when: non_active_avmid_list == []
   tags: [ 'never', 'devsim' ]

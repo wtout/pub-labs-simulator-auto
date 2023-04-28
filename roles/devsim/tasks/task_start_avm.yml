@@ -5,7 +5,7 @@
     ansible.builtin.shell: |
       /opt/{{ automation_reponame }}/jre1.8.0_60/bin/java -d64 -Dsun.net.httpserver.idleInterval=1600 -d64 -cp lib/*:simulator.jar: -Xmx{{ max_heap_size }}m -Xms8m  com.sheer.tools.simulator.AVM -a {{ avm_id }} -dummy {{ avm_id }} &
     register: reg_start
-    failed_when: reg_start.stderr is search('file not found|Invalid maximum heap size|heap space')
+    failed_when: reg_start.stderr is search('file not found|Invalid maximum heap size|heap space|GC overhead limit exceeded')
     args:
       chdir: /opt/{{ automation_reponame }}/simulator
     become: "{{ true if ansible_user != 'root' else false }}"

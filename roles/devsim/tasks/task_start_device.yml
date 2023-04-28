@@ -48,7 +48,7 @@
         vars:
           adj_heap: "{{ max_heap|int + 8 * (avmid|int - 100) }}"
           new_heap: "{{ [adj_heap|int,2048]|min }}"
-        when: reg_start.stderr is search('Invalid maximum heap size|heap space')
+        when: reg_start.stderr is search('Invalid maximum heap size|heap space|GC overhead limit exceeded')
     - block:
       - name: get highest used IP
         ansible.builtin.shell: |

@@ -5,8 +5,6 @@
     ansible.builtin.set_fact:
       first_available_ip: "{{ host_network|ansible.utils.ipaddr('next_usable') }}"
     when: active_avmid_list == [] or avm_id|int == first_dummy_interface_id
-    vars:
-      host_network: "{{ hostvars[inventory_hostname]['build']['secondary' if 'dr' in group_names else 'primary']['networks'][inventory_hostname[-2:]|int -1] }}"
   - block:
     - name: get IP from {{ 'AVM ID ' + (avm_id|int - 1)|string if device.num|int == 1 else 'highest AVM ID' }}
       ansible.builtin.shell: |
@@ -22,4 +20,9 @@
     when:
       - active_avmid_list != []
       - avm_id|int > first_dummy_interface_id
+  - ansible.builtin.assert:
+      that: "(first_available_ip + '/' + host_network|split('/')|last)|ansible.utils.next_nth_usable(device.num|int - 1) != None"
+      fail_msg: 'The network range required for this device simulation exceeds the network range configured for this Device Simulator instance'
+  vars:
+    host_network: "{{ hostvars[inventory_hostname]['build']['secondary' if 'dr' in group_names else 'primary']['networks'][inventory_hostname[-2:]|int -1] }}"
   tags: [ 'never', 'devsim' ]

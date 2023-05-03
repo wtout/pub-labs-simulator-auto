@@ -44,7 +44,7 @@
           file: task_delete_dummy_interface.yml
           apply:
             vars:
-              int_id: "{{ first_available_id }}"
+              int_id: "dummy{{ first_available_id }}"
       when: reg_start.stderr is search('file not found')
     - include_tasks:
         file: task_start_avm.yml
@@ -61,6 +61,7 @@
       ansible.builtin.shell: |
         ip a show dummy{{ first_available_id }}|grep inet|tail -1|awk '{print $2}'|cut -d '/' -f1
       register: reg_highest_ip
+      failed_when: reg_highest_ip.stderr is search('does not exist')
       become: "{{ true if ansible_user != 'root' else false }}"
       check_mode: no
     - block:
@@ -82,7 +83,7 @@
           apply:
             vars:
               avm_id: "{{ first_available_id }}"
-              max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320)]|max }}"
+              max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320 if device.num|int < 4000 else 576)]|max }}"
         vars:
           adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
           new_heap: "{{ [adj_heap|int,2048]|min }}"

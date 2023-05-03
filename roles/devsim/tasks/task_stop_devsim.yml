@@ -21,14 +21,29 @@
     loop_control:
       loop_var: id_item
     when: stop_devsim|default(false)|bool
-  - include_tasks:
-      file: task_remove_device.yml
-      apply:
-        vars:
-          good_avm_id: "{{ id_item }}"
-    loop: "{{ good_avmid_list|sort(reverse=True) }}"
-    loop_control:
-      loop_var: id_item
+  - block:
+    - include_tasks:
+        file: task_stop_avm.yml
+        apply:
+          vars:
+            avm_id: "{{ id_item }}"
+      loop: "{{ good_avmid_list|sort(reverse=True) }}"
+      loop_control:
+        loop_var: id_item
+    - include_tasks:
+        file: task_delete_avm_file.yml
+        apply:
+          vars:
+            avm_id: "{{ id_item }}"
+      loop: "{{ good_avmid_list|sort(reverse=True) }}"
+      loop_control:
+        loop_var: id_item
+    - include_tasks:
+        file: task_delete_dummy_interface.yml
+        apply:
+          vars:
+            int_id: "{{ good_avmid_list|sort(reverse=True)|map('regex_replace', '^(.*)$', 'dummy\\1')|list|join(' ') }}"
+      when: good_avmid_list != []
     when: rollback_devsim|default(false)|bool
   - debug:
       msg:

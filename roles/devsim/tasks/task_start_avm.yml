@@ -10,6 +10,8 @@
       chdir: /opt/{{ automation_reponame }}/simulator
     become: "{{ true if ansible_user != 'root' else false }}"
     no_log: yes
+  - ansible.builtin.assert:
+      that: reg_start.stderr is not search('Too many open files')
   always:
   - debug:
       msg:
@@ -17,5 +19,6 @@
     vars:
       mystdout: "{{ reg_start.stdout|truncate(355, '...truncated output') }}"
       mystdout_lines: "{{ reg_start.stdout_lines|join(',')|truncate(355, '...truncated output')|split(',') }}"
-      dict_copy: "{% set copy=reg_start.copy() %}{% set removed=copy.pop('stderr') %}{% set removed=copy.pop('stdout') %}{% set removed=copy.pop('stdout_lines') %}{% set _ = copy.update({'stdout': mystdout}) %}{% set _ = copy.update({'stdout_lines': mystdout_lines}) %}{{ copy }}"
+      mystderr_lines: "{{ reg_start.stderr_lines|join(',')|truncate(655, '...truncated output')|split(',') }}"
+      dict_copy: "{% set copy=reg_start.copy() %}{% set removed=copy.pop('stderr') %}{% set removed=copy.pop('stderr_lines') %}{% set removed=copy.pop('stdout') %}{% set removed=copy.pop('stdout_lines') %}{% set _ = copy.update({'stderr_lines': mystderr_lines}) %}{% set _ = copy.update({'stdout': mystdout}) %}{% set _ = copy.update({'stdout_lines': mystdout_lines}) %}{{ copy }}"
   tags: [ 'never', 'devsim' ]

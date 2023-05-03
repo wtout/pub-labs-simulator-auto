@@ -1,15 +1,16 @@
 ---
 # tasks to verify SSH conection to device
-- name: verify ssh connection to device at {{ ip }}
-  ansible.builtin.shell: |
-    timeout 10s sshpass -p {{ password }} ssh {{ username }}@{{ ip }} 'exit'
-  register: reg_ssh
-  until: reg_ssh is succeeded
-  retries: 5
-  failed_when:
-    - reg_ssh.rc != 0
-    - reg_ssh.rc != 6
-    - reg_ssh.stderr_lines|select('search', 'Connection (timed out|refused)|No route to host') != []
+- block:
+  - name: verify ssh connection to device at {{ ip }}
+    ansible.builtin.shell: |
+      timeout 15s sshpass -p {{ password }} ssh {{ username }}@{{ ip }} 'exit'
+    register: reg_ssh
+    until: reg_ssh is succeeded
+    retries: 13
+    failed_when:
+      - reg_ssh.rc != 0
+      - reg_ssh.rc != 6
+      - reg_ssh.stderr_lines|select('search', 'Connection (timed out|refused)|No route to host') != []
   check_mode: no
   delegate_to: localhost
   tags: [ 'never', 'devsim' ]

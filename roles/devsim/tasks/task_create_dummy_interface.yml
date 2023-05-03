@@ -1,11 +1,31 @@
 ---
 # tasks to create dummy interface
-- name: create dummy{{ int_id }} interface
-  community.general.nmcli:
-    conn_name: "dummy{{ int_id }}"
-    type: dummy
-    ip4: 192.0.0.1/24
-    ip6: 2001:db8:2::1/64
-    state: present
+- block:
+  - name: create dummy{{ int_id }} interface
+    community.general.nmcli:
+      conn_name: "dummy{{ int_id }}"
+      type: dummy
+      ip4: 192.0.0.1/24
+      ip6: 2001:db8:2::1/64
+      state: present
+    register: reg_new_dummy
+    until: reg_new_dummy is succeeded
+    delay: 30
+  rescue:
+  - name: reboot the device simulator VM
+    ansible.builtin.reboot:
+    when:
+      - active_avmid_list == []
+      - reg_new_dummy.msg|default('') is search('Could not create NMClient object')
+  - name: create dummy{{ int_id }} interface
+    community.general.nmcli:
+      conn_name: "dummy{{ int_id }}"
+      type: dummy
+      ip4: 192.0.0.1/24
+      ip6: 2001:db8:2::1/64
+      state: present
+    register: reg_new_dummy
+    until: reg_new_dummy is succeeded
+    delay: 30
   become: "{{ true if ansible_user != 'root' else false }}"
   tags: [ 'never', 'devsim' ]

@@ -16,7 +16,7 @@
       - name: define fid (defined)
         ansible.builtin.set_fact:
           fid: "{{ id_item if id_item|string not in active_avmid_list else '' }}"
-        loop: "{{ range(first_available_id|int + 1, active_avmid_list|last|int + 1) }}"
+        loop: "{{ range(first_available_id|int + 1, active_avmid_list|last|int + 1) if device.num|int == 1 else [] }}"
         loop_control:
           loop_var: id_item
         when:
@@ -26,7 +26,7 @@
       - name: define fid (undefined)
         ansible.builtin.set_fact:
           fid: "{{ id_item if id_item|string not in active_avmid_list else '' }}"
-        loop: "{{ range(first_dummy_interface_id|int, active_avmid_list|last|int + 1) }}"
+        loop: "{{ range(first_dummy_interface_id|int, active_avmid_list|last|int + 1) if device.num|int == 1 else [] }}"
         loop_control:
           loop_var: id_item
         when:
@@ -41,7 +41,6 @@
           - fid != ''
       when:
         - first_available_id|default(first_dummy_interface_id)|int < active_avmid_list|last|int
-        - device.num|int == 1
     when:
       - active_avmid_list != []
   tags: [ 'never', 'devsim' ]

@@ -3,7 +3,7 @@
 - block:
   - name: check if known hosts file exists
     ansible.builtin.stat:
-      path: ~/.ssh
+      path: ~/.ssh/known_hosts
     register: ssh_dir
   - name: delete ssh key
     ansible.builtin.lineinfile:

@@ -135,29 +135,49 @@ From the automation root directory (pae-labs-simulator-auto), run one of the bas
 
 with the _``system-name``_ being the name of the system definition file from "System Definition" and the script name being one of the following options:
 
-- ``play_deploy.sh`` in combination with the --tags devsim, enables the user to start the simulation of devices described in AVM file(s)
+- ``play_deploy.sh`` in combination with the --tags devsim, enables the user to deploy and activate the simulation of devices configured in AVM file(s)
 
-- ``play_rollback.sh`` in combination with the --tags devsim, enables the user to stop the simulation of devices described in AVM file(s)
+- ``play_rollback.sh`` in combination with the --tags devsim, enables the user to rollback and remove the simulation of devices configured in AVM file(s)
 
-- ``play_check.sh`` in combination with the --tags devsim, enables the user to check the status of simulated devices described in AVM file(s)
+- ``play_check.sh`` in combination with the --tags devsim, enables the user to check the status of active simulated devices
 
-**_Example1_**: to check what AVM IDs are available and what IDs are currently active (started), run the script as follows
+- ``play_start.sh`` in combination with the --tags devsim, enables the user to start the simulation of devices configured in AVM file(s)
+
+- ``play_stop.sh`` in combination with the --tags devsim, enables the user to stop the simulation of devices configured in AVM file(s)
+
+**_Example1_**: to check what AVM IDs are currently active (started), run the script as follows
 
     $> sh Bash/play_check.sh --envname <system-name> --tags devsim
 
-**_Example2_**: to start all available AVM IDs, run the script as follows
+***Note**: A complete list of active device simulation details is saved to the “active_simulated_devices.csv” file under the automation root directory*
 
-    $> sh Bash/play_deploy.sh --envname <system-name> --tags devsim
+**_Example2_**: to deploy/create new AVM IDs, run the script as follows
 
-**_Example3_**: to start specific AVM IDs, run the script as follows
+    $> sh Bash/play_deploy.sh --envname <system-name> --tags devsim -e @<device_list file name>
 
-    $> sh Bash/play_deploy.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
+***Note**: Use the devices.yml file as a template. The file name can be changed*
 
-**_Example4_**: to stop specific AVM IDs, run the script as follows
+**_Example3_**: to start/activate specific, already created, AVM IDs, run the script as follows
+
+    $> sh Bash/play_start.sh --envname <system-name> --tags devsim --avm_list id1,id2,id3,etc...
+
+**_Example4_**: to start/activate all already created AVM IDs, run the script as follows
+
+    $> sh Bash/play_start.sh --envname <system-name> --tags devsim
+
+**_Example5_**: to stop/deactivate specific active AVM IDs, run the script as follows
+
+    $> sh Bash/play_stop.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
+
+**_Example6_**: to stop/deactivate all active AVM IDs, run the script as follows
+
+    $> sh Bash/play_stop.sh --envname <system-name> --tags devsim
+
+**_Example7_**: to rollback/remove specific active AVM IDs, run the script as follows
 
     $> sh Bash/play_rollback.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
 
-**_Example5_**: to stop all available AVM IDs, run the script as follows
+**_Example8_**: to rollback/remove all active AVM IDs, run the script as follows
 
     $> sh Bash/play_rollback.sh --envname <system-name> --tags devsim
 

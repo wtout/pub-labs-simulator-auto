@@ -1,0 +1,38 @@
+<!-- Generic device config -->
+<key name="avm{{ first_available_id }}">
+  <key name="agents">
+    <key name="{{ device.id }}">
+      <entry name="snmpClassName">com.sheer.tools.simulator.snmp.Cisco6400NspSnmpSimulator</entry>
+      <entry name="telnetClassName">com.sheer.tools.simulator.telnet.Cisco7200TelnetSimulatorGenerator</entry>
+      <entry name="enableEcho">true</entry>
+{% if device.netconf|default(false)|bool %}
+      <entry name="isNetConfEnabled">true</entry>
+{% endif %}
+{% if device.ssh|default(false)|bool %}
+      <entry name="ssh">2</entry>
+      <entry name="Username">{{ device.username }}</entry>
+      <entry name="Password">{{ device.password }}</entry>
+{% endif %}
+{% if device.id|lower is search('air-') %}
+      <entry name="cliError"><![CDATA[Incorrect usage.  Use the '?' or <TAB> key to list commands.]]></entry>
+      <entry name="UsernamePrompt">User: </entry>
+{% endif %}
+      <key name="ipList">
+        <entry name="ips">{{ first_available_ip }}-{{ device.num }}</entry>
+      </key>
+      <!-- SNMP community name -->
+      <key name="{{ device.community|default('cisco') }}">
+        <entry name="prompt">{HOST}#</entry>
+{% if device.snmp|default(false)|bool %}
+        <entry name="walkFile">../recordings/snmp/{{ device.id }}.snmp</entry>
+{% endif %}
+{% if device.ssh|default(false)|bool %}
+        <entry name="recordFile">../recordings/cli/{{ device.id }}.cli</entry>
+{% endif %}
+{% if device.netconf|default(false)|bool %}
+        <entry name="netconfFile">../recordings/nconf/{{ device.id }}.nconf</entry>
+{% endif %}
+      </key>
+    </key>
+  </key>
+</key>

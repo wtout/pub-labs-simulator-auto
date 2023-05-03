@@ -1,38 +1,20 @@
 ---
 # tasks to get the avmid lists
 - block:
-  - name: find active AVM files/IDs
-    ansible.builtin.shell:
-      sh whoisavm.sh
-    register: reg_active
-    check_mode: no
-    no_log: yes
-    args:
-      chdir: /opt/{{ automation_reponame }}/simulator
-  - name: define active_avmid_list
-    ansible.builtin.set_fact:
-      active_avmid_list: "{{ reg_active.stdout_lines }}"
-  - name: find all AVM files
-    ansible.builtin.find:
-      paths: "/opt/{{ automation_reponame }}/simulator/registry"
-      patterns: 'avm*.xml'
-    register: reg_avm_files
-    no_log: true
-  - name: define avm_list
-    ansible.builtin.set_fact:
-      avm_list: "{{ avm_list|default([]) | union([file_item.path|regex_replace('^.*avm(.*).xml$','\\1')]) }}"
-    loop: "{{ reg_avm_files.files }}"
-    loop_control:
-      loop_var: file_item
-      label: "{{ file_item.path }}"
-  - name: define avmid lists
-    ansible.builtin.set_fact:
-      good_avmid_list: "{{ avm_list }}"
-      bad_avmid_list: []
-    when: AVMLIST|default('') == ''
-  - name: define avmid lists
-    ansible.builtin.set_fact:
-      good_avmid_list: "{{ AVMLIST|split(',')|list | intersect(avm_list) }}"
-      bad_avmid_list: "{{ AVMLIST|split(',')|list | difference(avm_list) }}"
-    when: AVMLIST|default('') != ''
+  - include_tasks: task_get_file_avmid.yml
+  - block:
+    - block:
+      - include_tasks: task_get_active_avmid.yml
+      - name: define avmid lists
+        ansible.builtin.set_fact:
+          good_avmid_list: "{{ file_avmid_list | difference(file_avmid_list)|map('int')|sort|map('string') }}"
+          bad_avmid_list: []
+      when: AVMLIST|default('') == ''
+    - name: define avmid lists
+      ansible.builtin.set_fact:
+        good_avmid_list: "{{ AVMLIST|split(',')|list | intersect(file_avmid_list)|map('int')|sort|map('string') }}"
+        bad_avmid_list: "{{ AVMLIST|split(',')|list | difference(file_avmid_list)|map('int')|sort|map('string') }}"
+      when: AVMLIST|default('') != ''
+    when:
+      - file_avmid_list != []
   tags: [ 'never', 'devsim' ]

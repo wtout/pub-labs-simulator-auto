@@ -12,10 +12,12 @@
     until: reg_new_dummy is succeeded
     delay: 30
   rescue:
-  - name: reboot the device simulator VM
-    ansible.builtin.reboot:
+  - name: Restart NetworkManager
+    systemd:
+      name: NetworkManager
+      state: restarted
+      daemon_reload: yes
     when:
-      - active_avmid_list == []
       - reg_new_dummy.msg|default('') is search('Could not create NMClient object')
   - name: create dummy{{ int_id }} interface
     community.general.nmcli:

@@ -32,5 +32,13 @@
   - name: define clone_repos
     ansible.builtin.set_fact:
       clone_repos: "{{ reg_clone_repos1 if reg_clone_repos1 is succeeded else reg_clone_repos2 }}"
+  - name: ensure log directory exists
+    ansible.builtin.file:
+      path: "/opt/{{ automation_reponame }}/simulator/log"
+      state: directory
+  - name: ensure Simulator.log file exists
+    ansible.builtin.file:
+      path: "/opt/{{ automation_reponame }}/simulator/log/Simulator.log"
+      state: touch
   become: "{{ true if ansible_user != 'root' else false }}"
   tags: vm_configuration

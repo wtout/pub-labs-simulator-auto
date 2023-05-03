@@ -1,13 +1,54 @@
 ---
 # tasks to stop device simulation
 - block:
+  - include_tasks: task_get_active_avmid.yml
+  - name: define avmid lists
+    ansible.builtin.set_fact:
+      good_avmid_list: "{{ active_avmid_list|map('int')|sort|map('string') }}"
+      bad_avmid_list: []
+    when: AVMLIST|default('') == ''
+  - name: define avmid lists
+    ansible.builtin.set_fact:
+      good_avmid_list: "{{ AVMLIST|split(',')|list | intersect(active_avmid_list)|map('int')|sort|map('string') }}"
+      bad_avmid_list: "{{ AVMLIST|split(',')|list | difference(active_avmid_list)|map('int')|sort|map('string') }}"
+    when: AVMLIST|default('') != ''
   - include_tasks:
-      file: task_manage_avm.yml
+      file: task_stop_avm.yml
       apply:
         vars:
           avm_id: "{{ id_item }}"
-          avm_action: 'stop'
-    loop: "{{ good_avmid_list }}"
+    loop: "{{ good_avmid_list|sort(reverse=True) }}"
     loop_control:
       loop_var: id_item
+    when: stop_devsim|default(false)|bool
+  - block:
+    - include_tasks:
+        file: task_stop_avm.yml
+        apply:
+          vars:
+            avm_id: "{{ id_item }}"
+      loop: "{{ good_avmid_list|sort(reverse=True) }}"
+      loop_control:
+        loop_var: id_item
+    - include_tasks:
+        file: task_delete_avm_file.yml
+        apply:
+          vars:
+            avm_id: "{{ id_item }}"
+      loop: "{{ good_avmid_list|sort(reverse=True) }}"
+      loop_control:
+        loop_var: id_item
+    - include_tasks:
+        file: task_delete_dummy_interface.yml
+        apply:
+          vars:
+            int_id: "{{ good_avmid_list|sort(reverse=True)|map('regex_replace', '^(.*)$', 'dummy\\1')|list|join(' ') }}"
+      when: good_avmid_list != []
+    when: rollback_devsim|default(false)|bool
+  - debug:
+      msg:
+        - 'The following AVM IDs do not correspond to active AVM files'
+        - "{{ bad_avmid_list|join(',') }}"
+    when:
+      - bad_avmid_list != []
   tags: [ 'never', 'devsim' ]

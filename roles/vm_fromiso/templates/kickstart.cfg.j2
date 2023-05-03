@@ -20,8 +20,8 @@ network --bootproto=static --device={{ netconfig.nic1.intname }} --onboot=on --e
 {% endif %}
 {% if netconfig.nic2.ipaddress != '' %}
 network --bootproto=static --device={{ netconfig.nic2.intname }} --interfacename={{ netconfig.nic2.intname }} --onboot=on --ethtool=vmxnet3 --gateway={{ netconfig.nic2.gateway if netconfig.nic2.gateway != '' else ((build.secondary.octets if 'dr' in group_names else build.primary.octets) + '.62') if (build.secondary.octets if 'dr' in group_names else build.primary.octets) is defined else '' }} --ip={{ netconfig.nic2.ipaddress }} --nameserver={{ (sysconfig.secondary.dns_servers if 'dr' in group_names else sysconfig.primary.dns_servers)|join(',') }} --netmask={{ netconfig.nic2.netmask }} {% if netconfig.nic2.ipv6_pool is defined and netconfig.nic2.ipv6_pool|length >= inventory_hostname[-2:]|int and netconfig.nic2.ipv6_pool[inventory_hostname[-2:]|int - 1] != '' -%} --ipv6={{ netconfig.nic2.ipv6_pool[inventory_hostname[-2:]|int - 1] }} --ipv6gateway={{ netconfig.nic2.ipv6_gtw }} {% else -%} --noipv6 {% endif -%} --activate
-network --hostname={{ vm.name }}
 {% endif %}
+network --hostname={{ vm.name }}
 
 # Root password
 rootpw --iscrypted {{ ansible_ssh_pass | password_hash('sha512') }}

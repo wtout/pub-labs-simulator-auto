@@ -1,0 +1,46 @@
+---
+# tasks to get the first available AVM ID
+- block:
+  - name: define first_available_id
+    ansible.builtin.set_fact:
+      first_available_id: "{{ first_dummy_interface_id }}"
+    when:
+      - active_avmid_list == []
+  - block:
+    - name: define first_available_id
+      ansible.builtin.set_fact:
+        first_available_id: "{{ active_avmid_list|last|int + 1 }}"
+      when:
+        - range(first_dummy_interface_id|int, active_avmid_list|last|int + 1)|map('string')|difference(active_avmid_list) == [] or device.num|int > 1
+    - block:
+      - name: define fid (defined)
+        ansible.builtin.set_fact:
+          fid: "{{ id_item if id_item|string not in active_avmid_list else '' }}"
+        loop: "{{ range(first_available_id|int + 1, active_avmid_list|last|int + 1) if device.num|int == 1 else [] }}"
+        loop_control:
+          loop_var: id_item
+        when:
+          - first_available_id is defined
+          - first_available_id != ''
+          - fid|default('') == ''
+      - name: define fid (undefined)
+        ansible.builtin.set_fact:
+          fid: "{{ id_item if id_item|string not in active_avmid_list else '' }}"
+        loop: "{{ range(first_dummy_interface_id|int, active_avmid_list|last|int + 1) if device.num|int == 1 else [] }}"
+        loop_control:
+          loop_var: id_item
+        when:
+          - first_available_id is not defined or first_available_id == ''
+          - fid|default('') == ''
+      - name: define first_available_id
+        ansible.builtin.set_fact:
+          first_available_id: "{{ fid }}"
+          fid: ''
+        when:
+          - fid is defined
+          - fid != ''
+      when:
+        - first_available_id|default(first_dummy_interface_id)|int < active_avmid_list|last|int
+    when:
+      - active_avmid_list != []
+  tags: [ 'never', 'devsim' ]

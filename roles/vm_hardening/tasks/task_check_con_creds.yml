@@ -1,0 +1,51 @@
+- name: check connection credentials
+  block:
+    - name: check VM reachable
+      ansible.builtin.command: ping {{ ansible_host }} -c 1
+      register: vh_vm_reachable
+      check_mode: no
+      delegate_to: localhost
+    - name: check original credentials
+      block:
+        - name: check VM credentials
+          ansible.builtin.wait_for_connection:
+            timeout: 10
+          register: vh_vm_creds
+          check_mode: no
+      rescue:
+        - name: switch to {{ vm_svc_user }} user
+          ansible.builtin.set_fact:
+            ansible_user: "{{ vm_svc_user }}"
+            ansible_ssh_pass: "{{ vm_svc_pass }}"
+            ansible_become_pass: "{{ vm_svc_pass }}"
+          no_log: true
+        - name: check {{ vm_svc_user }} credentials
+          ansible.builtin.wait_for_connection:
+            timeout: 10
+  rescue:
+    - name: check service user credentials
+      block:
+        - name: switch to {{ vm_svc_user }} user
+          ansible.builtin.set_fact:
+            ansible_user: "{{ vm_svc_user }}"
+            ansible_ssh_pass: "{{ vm_svc_pass }}"
+          no_log: true
+        - name: check connection
+          ansible.builtin.wait_for:
+            port: 22
+            host: "{{ netconfig.nic1.ipaddress }}"
+            search_regex: OpenSSH
+            timeout: 10
+          register: vh_vm_connection
+          check_mode: no
+          delegate_to: localhost
+        - ansible.builtin.debug:
+            msg: "VM hardening is enabled. Nothing to do"
+        - name: set flag to not create and configure the VMs
+          ansible.builtin.set_fact:
+            hardv: false
+      rescue:
+        - name: abort hardening
+          ansible.builtin.fail:
+            msg: 'Unable to connect to the VM. Check the connection details or that the VM is created. Aborting!'
+  tags: vm_hardening

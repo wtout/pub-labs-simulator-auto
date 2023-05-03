@@ -1,13 +1,32 @@
 ---
 # tasks to start device simulation
 - block:
+  - block:
+    - include_tasks: task_get_avmid_lists.yml
+    - include_tasks:
+        file: task_start_device.yml
+        apply:
+          vars:
+            avmid: "{{ id_item }}"
+            avm_action: 'start'
+      loop: "{{ good_avmid_list }}"
+      loop_control:
+        loop_var: id_item
+    - debug:
+        msg:
+          - 'The following AVM IDs do not correspond to AVM files'
+          - "{{ bad_avmid_list|join(',') }}"
+      when:
+        - bad_avmid_list != []
+    when: start_devsim|default(false)|bool
   - include_tasks:
-      file: task_manage_avm.yml
+      file: task_simulate_device.yml
       apply:
         vars:
-          avm_id: "{{ id_item }}"
+          device: "{{ device_item }}"
           avm_action: 'start'
-    loop: "{{ good_avmid_list }}"
+    loop: "{{ device_list }}"
     loop_control:
-      loop_var: id_item
+      loop_var: device_item
+    when: deploy_devsim|default(false)|bool
   tags: [ 'never', 'devsim' ]

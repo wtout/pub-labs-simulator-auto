@@ -14,9 +14,11 @@
   - include_tasks: task_delete_kickstart_files.yml
   - include_tasks: task_update_default_route.yml
   - include_tasks: task_add_gtw2.yml
+  - include_tasks: task_increase_open_files_limit.yml
 
   - name: flush handlers
     meta: flush_handlers
 
+  - include_tasks: task_increase_max_pid_number.yml
   - include_tasks: task_update_os.yml
   tags: vm_creation

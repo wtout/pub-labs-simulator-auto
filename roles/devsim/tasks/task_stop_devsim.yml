@@ -42,8 +42,10 @@
         file: task_delete_dummy_interface.yml
         apply:
           vars:
-            int_id: "{{ good_avmid_list|sort(reverse=True)|map('regex_replace', '^(.*)$', 'dummy\\1')|list|join(' ') }}"
-      when: good_avmid_list != []
+            int_id: "{{ id_item }}"
+      loop: "{{ good_avmid_list|sort(reverse=True) }}"
+      loop_control:
+        loop_var: id_item
     when: rollback_devsim|default(false)|bool
   - debug:
       msg:

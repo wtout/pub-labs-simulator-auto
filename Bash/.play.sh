@@ -686,4 +686,5 @@ enable_logging "${@}"
 start_container
 run_playbook "${@}"
 stop_container
+rm -f ${SVCVAULT}
 disable_logging

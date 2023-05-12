@@ -94,8 +94,9 @@
               ip: "{{ reg_highest_ip.stdout }}"
               username: "{{ device.username }}"
               password: "{{ device.password }}"
-      when: reg_start is succeeded
-    when: device.ssh|default(false)|bool
+    when:
+      - reg_start is succeeded
+      - device.ssh|default(false)|bool
   vars:
     max_heap: "{{ '64' if device.ssh|default(false)|bool else '32' }}"
   tags: [ 'never', 'devsim' ]

@@ -37,9 +37,9 @@ device_list:
   - {'id': 'c9800-80-k9', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': yes, 'community': 'cisco'}
   - {'id': 'c9800-cl-k9', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': yes, 'community': 'cisco'}
   - {'id': 'c9800-l-f-k9', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': yes, 'community': 'cisco'}
-  - {'id': 'cade-2140-k9', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': yes, 'community': 'cisco'}
-  - {'id': 'cdb8u', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': yes, 'community': 'cisco'}
-  - {'id': 'ce560', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': yes, 'community': 'cisco'}
+  - {'id': 'cade-2140-k9', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
+  - {'id': 'cdb8u', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
+  - {'id': 'ce560', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'id': 'cisco12008-prp', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'id': 'cisco12406-prp', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}
   - {'id': 'cisco12816-prp', 'num': '1', 'username': 'cisco', 'password': 'cisco', 'ssh': yes, 'snmp': yes, 'netconf': no, 'community': 'cisco'}

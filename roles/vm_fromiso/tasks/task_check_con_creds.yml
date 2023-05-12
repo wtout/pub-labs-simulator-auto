@@ -41,7 +41,7 @@
           register: vcr_vm_connection
           check_mode: no
           delegate_to: localhost
-        - debug:
+        - ansible.builtin.debug:
             msg: "VM hardening is enabled. Nothing to do"
         - name: set flag to not create and configure the VMs
           ansible.builtin.set_fact:

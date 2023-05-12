@@ -15,7 +15,7 @@
 
   - block:
     - name: Delete credentials
-      file:
+      ansible.builtin.file:
         path: "{{ VFILE }}"
         state: absent
       when:

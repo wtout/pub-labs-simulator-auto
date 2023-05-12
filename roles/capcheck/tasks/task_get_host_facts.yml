@@ -2,7 +2,7 @@
 # tasks to get host info
 - block:
   - name: Get host info
-    vmware_host_facts:
+    community.vmware.vmware_host_facts:
       hostname: "{{ information.address }}"
       username: "{{ credentials.username }}"
       password: "{{ credentials.password }}"
@@ -16,7 +16,7 @@
 
   - block:
     - name: define list of stack ssd datastores with enough free space
-      set_fact:
+      ansible.builtin.set_fact:
         stack_ssd_ds_names: "{{ stack_ssd_ds_names|default([]) | union(ds_item.ansible_facts.ansible_datastore|selectattr('name', 'search', 'ssd')|map(attribute='name')|list) }}"
       vars:
         myvar: "{{ ds_item.ansible_facts.ansible_datastore|selectattr('name', 'search', 'ssd')|map(attribute='free')|list|join }}"
@@ -32,10 +32,10 @@
         - myvar|regex_replace(' [T|G]B', '')|float >= (vmvar|float / 1024 if myvar is search('TB') else vmvar|float)
         - mydst is not regex(exreg)
     - name: define list of stack01 ssd datastores with enough free space
-      set_fact:
+      ansible.builtin.set_fact:
         stack01_ssd_ds_names: "{{ stack_ssd_ds_names|default([])|select('match', '^.+-[0-9][13579]')|list }}"
     - name: check length of stack01_ssd_ds_names
-      assert:
+      ansible.builtin.assert:
         that:
           - stack01_ssd_ds_names | length >= 1
         fail_msg: "No SSD storage space available for the odd VMs of the stack"
@@ -44,10 +44,10 @@
         - information.resources|length > 1
         - ansible_play_hosts | select('search', 'em7db|splind') | reject('search', 'dr') | reject('match', '^.+[02468]$') | list | length >= 1
     - name: define list of stack02 ssd datastores with enough free space
-      set_fact:
+      ansible.builtin.set_fact:
         stack02_ssd_ds_names: "{{ stack_ssd_ds_names|default([])|select('match', '^.+-[0-9][02468]')|list }}"
     - name: check length of stack02_ssd_ds_names
-      assert:
+      ansible.builtin.assert:
         that:
           - stack02_ssd_ds_names | length >= 1
         fail_msg: "No SSD storage space available for the even VMs of the stack"
@@ -56,7 +56,7 @@
         - information.resources|length > 1
         - ansible_play_hosts | select('search', 'em7db|splind') | reject('search', 'dr') | select('match', '^.+[02468]$') | list | length >= 1
     - name: check length of stack_ssd_ds_names
-      assert:
+      ansible.builtin.assert:
         that:
           - "stack_ssd_ds_names|length >= (1 if information.resources|length == 1 else 2)"
         fail_msg: "Not enough SSD storage space to deploy EM7 databases and/or splunk indices third disk"
@@ -67,7 +67,7 @@
 
   - block:
     - name: define list of DR ssd datastores with enough free space
-      set_fact:
+      ansible.builtin.set_fact:
         dr_ssd_ds_names: "{{ dr_ssd_ds_names|default([]) | union(ds_item.ansible_facts.ansible_datastore|selectattr('name', 'search', 'ssd')|map(attribute='name')|list) }}"
       vars:
         myvar: "{{ ds_item.ansible_facts.ansible_datastore|selectattr('name', 'search', 'ssd')|map(attribute='free')|list|join }}"
@@ -83,7 +83,7 @@
         - myvar|regex_replace(' [T|G]B', '')|float >= (vmvar|float / 1024 if myvar is search('TB') else vmvar|float)
         - mydst != '' and mydst is not search(exreg)
     - name: check length of dr_ssd_ds_names
-      assert:
+      ansible.builtin.assert:
         that:
           - dr_ssd_ds_names | length >= 1
         fail_msg: "No SSD storage space available for the DR VMs"
@@ -95,13 +95,13 @@
       - "'drvcenter' in group_names"
 
   - name: define list of ssd datastores with enough free space
-    set_fact:
+    ansible.builtin.set_fact:
       ssd_ds_names: "{{ stack_ssd_ds_names|default([]) | union(dr_ssd_ds_names|default([])) }}"
     when:
       - ('vcenter' in group_names and information.resources|length > 1 and ansible_play_hosts | select('search', 'em7db|splind') | list | length >= 1) or ('drvcenter' in group_names and information.resources|length >= 1 and ansible_play_hosts | select('search', 'em7db|splind')|list|length >= 1) or ('vcenter' in group_names and information.resources|length == 1 and ansible_play_hosts | select('search', 'em7|spl')|list|length >= 1)
 
   - name: check length of ssd_ds_names
-    assert:
+    ansible.builtin.assert:
       that:
         - "ssd_ds_names|length >= 1"
       fail_msg: "Not enough SSD storage space to deploy the DB VM"
@@ -111,7 +111,7 @@
 
   - block:
     - name: define list of stack sas datastores with enough free space
-      set_fact:
+      ansible.builtin.set_fact:
         stack_sas_ds_names: "{{ stack_sas_ds_names|default([]) | union(ds_item.ansible_facts.ansible_datastore|selectattr('name', 'search', 'sas')|map(attribute='name')|list) }}"
       vars:
         myvar: "{{ ds_item.ansible_facts.ansible_datastore|selectattr('name', 'search', 'sas')|map(attribute='free')|list|join }}"
@@ -127,10 +127,10 @@
         - myvar|regex_replace(' [T|G]B', '')|float >= (vmvar|float / 1024 if myvar is search('TB') else vmvar|float)
         - mydst is not regex(exreg)
     - name: define list of stack01 sas datastores with enough free space
-      set_fact:
+      ansible.builtin.set_fact:
         stack01_sas_ds_names: "{{ stack_sas_ds_names|default([])|select('match', '^.+-[0-9][13579]')|list }}"
     - name: check length of stack01_sas_ds_names
-      assert:
+      ansible.builtin.assert:
         that:
           - stack01_sas_ds_names|length >= 1
         fail_msg: "No SAS storage space available for the odd VMs of the stack"
@@ -139,10 +139,10 @@
         - information.resources|length > 1
         - ansible_play_hosts | reject('search', 'dr|em7db|vcenter') | reject('match', '^.+[02468]$') | list | length >= 1
     - name: define list of stack02 sas datastores with enough free space
-      set_fact:
+      ansible.builtin.set_fact:
         stack02_sas_ds_names: "{{ stack_sas_ds_names|default([])|select('match', '^.+-[0-9][02468]')|list }}"
     - name: check length of stack02_sas_ds_names
-      assert:
+      ansible.builtin.assert:
         that:
           - stack02_sas_ds_names|length >= 1
         fail_msg: "No SAS storage space available for the even VMs of the stack"
@@ -151,7 +151,7 @@
         - information.resources|length > 1
         - ansible_play_hosts | reject('search', 'dr|em7db|vcenter') | select('match', '^.+[02468]$') | list | length >= 1
     - name: check length of stack_sas_ds_names
-      assert:
+      ansible.builtin.assert:
         that:
           - "stack_sas_ds_names|length >= (1 if information.resources|length == 1 else 2)"
         fail_msg: "Not enough SAS storage space to deploy the non-DB VMs"
@@ -162,7 +162,7 @@
 
   - block:
     - name: define list of DR sas datastores with enough free space
-      set_fact:
+      ansible.builtin.set_fact:
         dr_sas_ds_names: "{{ dr_sas_ds_names|default([]) | union(ds_item.ansible_facts.ansible_datastore|selectattr('name', 'search', 'sas')|map(attribute='name')|list) }}"
       vars:
         myvar: "{{ ds_item.ansible_facts.ansible_datastore|selectattr('name', 'search', 'sas')|map(attribute='free')|list|join }}"
@@ -178,7 +178,7 @@
         - myvar|regex_replace(' [T|G]B', '')|float >= (vmvar|float / 1024 if myvar is search('TB') else vmvar|float)
         - mydst != '' and mydst is not search(exreg)
     - name: check length of dr_sas_ds_names
-      assert:
+      ansible.builtin.assert:
         that:
           - dr_sas_ds_names|length >= 1
         fail_msg: "No SAS storage space available for the DR VMs"
@@ -190,13 +190,13 @@
       - "'drvcenter' in group_names"
 
   - name: define list of sas datastores with enough free space
-    set_fact:
+    ansible.builtin.set_fact:
       sas_ds_names: "{{ stack_sas_ds_names|default([]) | union(dr_sas_ds_names|default([])) }}"
     when:
       - ('vcenter' in group_names and information.resources|length > 1 and ansible_play_hosts|reject('search', 'em7db|vcenter')|list|length >= 1) or ('drvcenter' in group_names and information.resources|length >= 1 and ansible_play_hosts|reject('search', 'em7db|vcenter')|list|length >= 1) or ('vcenter' in group_names and information.resources|length == 1 and ansible_play_hosts|reject('search', 'em7|vcenter')|list|length >= 1)
 
   - name: check length of sas_ds_names
-    assert:
+    ansible.builtin.assert:
       that:
         - "sas_ds_names|length >= 1"
       fail_msg: "Not enough SAS storage space to deploy the non-DB VMs"
@@ -205,7 +205,7 @@
       - ('vcenter' in group_names and information.resources|length > 1 and ansible_play_hosts|reject('search', 'em7db|vcenter')|list|length >= 1) or ('drvcenter' in group_names and information.resources|length >= 1 and ansible_play_hosts|reject('search', 'em7db|vcenter')|list|length >= 1) or ('vcenter' in group_names and information.resources|length == 1 and ansible_play_hosts|reject('search', 'em7|vcenter')|list|length >= 1)
 
   - name: define ssd_ds_total_fs
-    set_fact:
+    ansible.builtin.set_fact:
       ssd_ds_total_fs: "{{ ssd_ds_total_fs|default(0)|float + myvar|regex_replace(' [T|G]B', '')|float * (1024|pow(4) if myvar is search('TB') else 1024|pow(3)) }}"
     vars:
       myvar: "{{ ds_item.1.ansible_facts.ansible_datastore|selectattr('name', 'equalto', ds_item.0)|map(attribute='free')|list|join }}"
@@ -217,7 +217,7 @@
       - ('vcenter' in group_names and information.resources|length > 1 and ansible_play_hosts | select('search', 'em7db|splind') | list | length >= 1) or ('drvcenter' in group_names and information.resources|length >= 1 and ansible_play_hosts | select('search', 'em7db|splind')|list|length >= 1) or ('vcenter' in group_names and information.resources|length == 1 and ansible_play_hosts | select('search', 'em7|spl')|list|length >= 1)
 
   - name: define sas_ds_total_fs
-    set_fact:
+    ansible.builtin.set_fact:
       sas_ds_total_fs: "{{ sas_ds_total_fs|default(0)|float + myvar|regex_replace(' [T|G]B', '')|float * (1024|pow(4) if myvar is search('TB') else 1024|pow(3)) }}"
     vars:
       myvar: "{{ ds_item.1.ansible_facts.ansible_datastore|selectattr('name', 'equalto', ds_item.0)|map(attribute='free')|list|join }}"
@@ -229,7 +229,7 @@
       - ('vcenter' in group_names and information.resources|length > 1 and ansible_play_hosts|reject('search', 'em7db|vcenter')|list|length >= 1) or ('drvcenter' in group_names and information.resources|length >= 1 and ansible_play_hosts|reject('search', 'em7db|vcenter')|list|length >= 1) or ('vcenter' in group_names and information.resources|length == 1 and ansible_play_hosts|reject('search', 'em7|vcenter')|list|length >= 1)
 
   - name: define lists of datastores to host the Stack VMs
-    set_fact:
+    ansible.builtin.set_fact:
       "{{ group_item + '_ds_names' }}": "{{ stack_ssd_ds_names if ((information.resources|length > 1 and group_item is search('em7db')) or (information.resources|length == 1 and group_item is search('em7'))) else stack_sas_ds_names }}"
     loop: "{{ play_stack_group_list }}"
     loop_control:
@@ -239,7 +239,7 @@
       - ansible_play_hosts | reject('search', 'dr|vcenter') | list | length >= 1
 
   - name: define lists of datastores to host the DR VMs
-    set_fact:
+    ansible.builtin.set_fact:
       "{{ group_item + '_ds_names' }}": "{{ dr_ssd_ds_names if group_item is search('drem7db') else dr_sas_ds_names }}"
     loop: "{{ play_dr_group_list }}"
     loop_control:
@@ -250,19 +250,19 @@
       - ansible_play_hosts | select('search', 'dr') | list | length >= 1
 
   - name: define list of usable datastores
-    set_fact:
+    ansible.builtin.set_fact:
       usable_ds_list: "{{ ssd_ds_names|default([]) | union(sas_ds_names|default([])) }}" 
 
   - name: define total free space on usable datastores
-    set_fact:
+    ansible.builtin.set_fact:
       total_fs: "{{ ssd_ds_total_fs|default(0)|float + sas_ds_total_fs|default(0)|float }}"
 
-  - assert:
+  - ansible.builtin.assert:
       that:
         - "(total_fs|float / 1024|pow(3)) >= (required_space|default(0)|float + dr_required_space|default(0)|float)"
       fail_msg: "Not enough storage space to deploy all the VMs"
 
-  - debug:
+  - ansible.builtin.debug:
       msg:
         - "Total available system storage space: {{ (total_fs|float / 1024|pow(4))|string + ' TiB' if (total_fs|int)|string|length > 12 else (total_fs|float / 1024|pow(3))|string + ' GiB' }}"
         - "{{ ssd_ds_names|default([]) }}"

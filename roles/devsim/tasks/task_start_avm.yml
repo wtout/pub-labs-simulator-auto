@@ -13,7 +13,7 @@
   - ansible.builtin.assert:
       that: reg_start.stderr is not search('Too many open files')
   always:
-  - debug:
+  - ansible.builtin.debug:
       msg:
         - "{{ dict_copy }}"
     vars:

@@ -45,7 +45,7 @@
     retries: 5
     delay: 10
   - name: Wait for port 22 to become open and contain "OpenSSH"
-    wait_for:
+    ansible.builtin.wait_for:
       port: 22
       host: "{{ netconfig.nic1.ipaddress if netconfig.nic1.ipaddress != '' else netconfig.nic2.ipaddress }}"
       search_regex: OpenSSH

@@ -21,7 +21,7 @@
   tags: vm_creation
 
 - name: define parted_start
-  set_fact:
+  ansible.builtin.set_fact:
     parted_start: "{{ task_item.begin | default(0) }}"
   loop: "{{ parted_info.partitions }}"
   loop_control:
@@ -59,7 +59,7 @@
   tags: vm_creation
 
 - name: expand disk1
-  shell: |
+  ansible.builtin.shell: |
     echo -e "n\np\n\n\n\nw\n" | fdisk /dev/sdb
   become: "{{ true if ansible_user != 'root' else false }}"
   notify: create disk1 filesystem
@@ -87,7 +87,7 @@
   tags: vm_creation
 
 - name: set permissions and ownership of /opt
-  file:
+  ansible.builtin.file:
     path: /opt
     state: directory
     mode: 0755
@@ -97,7 +97,7 @@
   tags: vm_creation
 
 - name: expand disk2
-  shell: |
+  ansible.builtin.shell: |
     echo -e "n\np\n\n\n\nw\n" | fdisk /dev/sdc
   become: "{{ true if ansible_user != 'root' else false }}"
   notify: create disk2 filesystem
@@ -125,7 +125,7 @@
   tags: vm_creation
 
 - name: set permissions and ownership of /data01
-  file:
+  ansible.builtin.file:
     path: /data01
     state: directory
     mode: 0755
@@ -135,7 +135,7 @@
   tags: vm_creation
 
 - name: expand disk3
-  shell: |
+  ansible.builtin.shell: |
     echo -e "n\np\n\n\n\nw\n" | fdisk /dev/sdd
   become: "{{ true if ansible_user != 'root' else false }}"
   notify: create disk3 filesystem
@@ -164,7 +164,7 @@
   tags: vm_creation
 
 - name: set permissions and ownership of /data02
-  file:
+  ansible.builtin.file:
     path: /data02
     state: directory
     mode: 0755

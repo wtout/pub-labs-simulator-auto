@@ -2,7 +2,7 @@
 # tasks to validate vcenter credentials
 - block:
   - name: Validate {{ 'secondary' if vcenter_host is search('dr') else 'primary' }} vcenter credentials
-    vmware_about_info:
+    community.vmware.vmware_about_info:
       hostname: "{{ hostvars[vcenter_host]['information']['address'] }}"
       username: "{{ hostvars[vcenter_host]['credentials']['username'] }}"
       password: "{{ hostvars[vcenter_host]['credentials']['password'] }}"
@@ -11,7 +11,7 @@
     ignore_errors: true
     delegate_to: localhost
 
-  - set_fact:
+  - ansible.builtin.set_fact:
       abort_play: yes
       err_msg: "{{ vcenter_host }}: {{ vcenter_creds.msg }}"
     when:

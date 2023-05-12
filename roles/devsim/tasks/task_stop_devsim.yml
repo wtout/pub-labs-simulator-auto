@@ -47,7 +47,7 @@
       loop_control:
         loop_var: id_item
     when: rollback_devsim|default(false)|bool
-  - debug:
+  - ansible.builtin.debug:
       msg:
         - 'The following AVM IDs do not correspond to active AVM files'
         - "{{ bad_avmid_list|join(',') }}"

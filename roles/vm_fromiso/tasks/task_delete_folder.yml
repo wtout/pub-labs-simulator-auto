@@ -12,12 +12,12 @@
     no_log: yes
   - block:
     - include_tasks: task_check_folder_empty.yml
-    - debug:
+    - ansible.builtin.debug:
         msg: "The folder '{{ folder_name }}' cannot be deleted because it is not empty"
       when: not folder_empty
     - block:
       - name: Delete the {{ folder_name }} folder
-        vcenter_folder:
+        community.vmware.vcenter_folder:
           hostname: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['address'] }}"
           username: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['username'] }}"
           password: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['password'] }}"
@@ -29,7 +29,7 @@
           validate_certs: no
         register: cust_folder
       rescue:
-      - fail:
+      - ansible.builtin.fail:
           msg: "Failed to delete the folder '{{ folder_name }}'"
         when:
           - cust_folder is failed

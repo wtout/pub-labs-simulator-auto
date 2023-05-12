@@ -2,7 +2,7 @@
 # Tasks to add GTW to NIC2 interface file on the VM
 - block:
   - name: Delete gateway from ens160 interface file
-    vmware_vm_shell:
+    community.vmware.vmware_vm_shell:
       hostname: "{{ hostvars[groups['vcenter'][0]]['information']['address'] }}"
       username: "{{ hostvars[groups['vcenter'][0]]['credentials']['username'] }}"
       password: "{{ hostvars[groups['vcenter'][0]]['credentials']['password'] }}"
@@ -17,7 +17,7 @@
     register: intfile160
     until: intfile160 is succeeded
   - name: Add gateway to ens192 interface file
-    vmware_vm_shell:
+    community.vmware.vmware_vm_shell:
       hostname: "{{ hostvars[groups['vcenter'][0]]['information']['address'] }}"
       username: "{{ hostvars[groups['vcenter'][0]]['credentials']['username'] }}"
       password: "{{ hostvars[groups['vcenter'][0]]['credentials']['password'] }}"
@@ -32,7 +32,7 @@
     register: intfile192
     until: intfile192 is succeeded
   - name: restart the network
-    vmware_vm_shell:
+    community.vmware.vmware_vm_shell:
       hostname: "{{ hostvars[groups['vcenter'][0]]['information']['address'] }}"
       username: "{{ hostvars[groups['vcenter'][0]]['credentials']['username'] }}"
       password: "{{ hostvars[groups['vcenter'][0]]['credentials']['password'] }}"

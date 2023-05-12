@@ -26,7 +26,7 @@
           validate_certs: no
         register: reg_add_attribute
     rescue:
-      - debug:
+      - ansible.builtin.debug:
           msg:
             - 'The automation user does not have sufficient privileges to modify custom attributes'
         when:

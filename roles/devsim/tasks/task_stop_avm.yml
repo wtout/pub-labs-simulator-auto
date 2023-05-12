@@ -7,6 +7,6 @@
     register: reg_stop
     become: "{{ true if ansible_user != 'root' else false }}"
   rescue:
-  - debug:
+  - ansible.builtin.debug:
       msg: "{{ reg_stop }}"
   tags: [ 'never', 'devsim' ]

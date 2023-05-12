@@ -12,7 +12,7 @@
       loop: "{{ good_avmid_list }}"
       loop_control:
         loop_var: id_item
-    - debug:
+    - ansible.builtin.debug:
         msg:
           - 'The following AVM IDs do not correspond to AVM files'
           - "{{ bad_avmid_list|join(',') }}"

@@ -2,7 +2,7 @@
 # tasks to define vm ips
 - block:
   - name: define IP addresses
-    set_fact:
+    ansible.builtin.set_fact:
       ipaddress1: "{{ netconfig.nic1.ippool[index|int - 1] if netconfig.nic1.ippool != [] else (build.secondary.octets if inventory_hostname is search('dr') else build.primary.octets) + '.' + netconfig.nic1.octetpool[index|int - 1]|string if (netconfig.nic1.octetpool != [] and index|int <= netconfig.nic1.octetpool|length) else '' }}"
       ipaddress2: "{{ netconfig.nic2.ippool[index|int - 1] if netconfig.nic2.ippool != [] else (build.secondary.octets if inventory_hostname is search('dr') else build.primary.octets) + '.' + netconfig.nic2.octetpool[index|int - 1]|string if (netconfig.nic2.octetpool != [] and index|int <= netconfig.nic2.octetpool|length) else '' }}"
       ipaddress3: "{{ netconfig.nic3.ippool[index|int - 1] if (netconfig.nic3.ippool is defined and netconfig.nic3.ippool != []) else (build.secondary.octets if inventory_hostname is search('dr') else build.primary.octets) + '.' + netconfig.nic3.octetpool[index|int - 1]|string if ((netconfig.nic3.octetpool is defined and netconfig.nic3.octetpool != []) and index|int <= netconfig.nic3.octetpool|length) else '' }}"
@@ -12,11 +12,11 @@
       index: "{{ inventory_hostname[-2:] }}"
 
   - name: define ansible_host
-    set_fact:
+    ansible.builtin.set_fact:
       ansible_host: "{{ ipaddress1 if ipaddress1 != '' else ipaddress2 }}"
 
   - name: update netconfig with IP addresses
-    set_fact:
+    ansible.builtin.set_fact:
       netconfig: "{{ netconfig|default({}) | combine(new_item, recursive=true) }}"
     vars:
       new_item: "{'{{ task_item.interface }}': {'{{ task_item.key }}': '{{ task_item.value }}'}}"

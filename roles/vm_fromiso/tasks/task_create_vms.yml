@@ -22,7 +22,7 @@
         - inventory_hostname == ansible_play_hosts | intersect(groups['dr']) | first
     - block:
       - name: get list of groups in play
-        set_fact:
+        ansible.builtin.set_fact:
           play_group_list: "{{ play_group_list|default([]) | union([host_item[:-2]]) }}"
         loop: "{{ ansible_play_hosts | reject('search', 'vcenter') | list }}"
         loop_control:

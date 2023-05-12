@@ -1,7 +1,7 @@
 ---
 # Tasks to create the avm file
 - name: Create avm{{ avm_id }}.xml file
-  template:
+  ansible.builtin.template:
     src: templates/avm.xml.tmpl
     dest: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avm_id }}.xml"
     owner: root

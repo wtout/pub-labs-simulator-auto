@@ -44,7 +44,7 @@
           file: task_delete_dummy_interface.yml
           apply:
             vars:
-              int_id: "dummy{{ first_available_id }}"
+              int_id: "{{ first_available_id }}"
       when: reg_start.stderr is search('file not found')
     - include_tasks:
         file: task_start_avm.yml

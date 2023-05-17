@@ -5,7 +5,7 @@
     ansible.builtin.shell: |
       grep '^    <key name="' {{ avm_file }} | cut -d '"' -f2
       sed -n '/SNMP community/{n;p;}' {{ avm_file }}
-      grep -E '^      <entry name="ssh"|^        <entry name="ips"|^      <entry name="Username"|Password|netconfFile|walkFile' {{ avm_file }}
+      grep -E '^      <entry name="ssh"|^        <entry name="ips"|^      <entry name="Username"|Password|netconfFile|walkFile|v3' {{ avm_file }}
     register: reg_devinfo
   - name: define read device info lists
     ansible.builtin.set_fact:
@@ -15,6 +15,12 @@
       read_username_list: "{{ read_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Username')|regex_replace('^.*Username\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','ssh')|length == 1 else ''] }}"
       read_password_list: "{{ read_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Password')|regex_replace('^.*Password\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','ssh')|length == 1 else ''] }}"
       read_netconf_list: "{{ read_netconf_list|default([]) + [reg_devinfo.stdout_lines|select('search','netconfFile')|length == 1] }}"
-      read_snmp_list: "{{ read_snmp_list|default([]) + [reg_devinfo.stdout_lines|select('search','walkFile')|length == 1] }}"
-      read_community_list: "{{ read_community_list|default([]) + [reg_devinfo.stdout_lines|select('search','key name')|regex_replace('^.*=\"(.*)\">.*$','\\1') if reg_devinfo.stdout_lines|select('search','walkFile')|length == 1 else ''] }}"
+      read_snmpv3_list: "{{ read_snmpv3_list|default([]) + [reg_devinfo.stdout_lines|select('search','v3UserName')|length == 1] }}"
+      read_snmpv3username_list: "{{ read_snmpv3username_list|default([]) + [reg_devinfo.stdout_lines|select('search','v3UserName')|regex_replace('^.*v3UserName\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','v3UserName')|length == 1 else ''] }}"
+      read_snmpv3authpassword_list: "{{ read_snmpv3authpassword_list|default([]) + [reg_devinfo.stdout_lines|select('search','v3AuthPassword')|regex_replace('^.*v3AuthPassword\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','v3AuthPassword')|length == 1 else ''] }}"
+      read_snmpv3authprotocol_list: "{{ read_snmpv3authprotocol_list|default([]) + [reg_devinfo.stdout_lines|select('search','v3AuthProtocol')|regex_replace('^.*v3AuthProtocol\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','v3AuthProtocol')|length == 1 else ''] }}"
+      read_snmpv3privpassword_list: "{{ read_snmpv3privpassword_list|default([]) + [reg_devinfo.stdout_lines|select('search','v3PrivPassword')|regex_replace('^.*v3PrivPassword\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','v3PrivPassword')|length == 1 else ''] }}"
+      read_snmpv3privprotocol_list: "{{ read_snmpv3privprotocol_list|default([]) + [reg_devinfo.stdout_lines|select('search','v3PrivProtocol')|regex_replace('^.*v3PrivProtocol\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','v3PrivProtocol')|length == 1 else ''] }}"
+      read_snmpv2_list: "{{ read_snmpv2_list|default([]) + [reg_devinfo.stdout_lines|select('search','walkFile')|length == 1 and reg_devinfo.stdout_lines|select('search','v3UserName')|length == 0] }}"
+      read_snmpv2_community_list: "{{ read_snmpv2_community_list|default([]) + [reg_devinfo.stdout_lines|select('search','key name')|regex_replace('^.*=\"(.*)\">.*$','\\1') if reg_devinfo.stdout_lines|select('search','walkFile')|length == 1 and reg_devinfo.stdout_lines|select('search','v3UserName')|length == 0 else ''] }}"
   tags: [ 'never', 'devsim' ]

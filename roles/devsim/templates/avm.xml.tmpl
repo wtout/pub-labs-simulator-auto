@@ -1,4 +1,4 @@
-<!-- Generic device config -->
+<!-- Simulated device config -->
 <key name="avm{{ first_available_id }}">
   <key name="agents">
     <key name="{{ device.id }}">
@@ -12,6 +12,7 @@
       <entry name="ssh">2</entry>
       <entry name="Username">{{ device.username }}</entry>
       <entry name="Password">{{ device.password }}</entry>
+      <entry name="loginBanner">\nThis is a {% if ansible_host is search('172.30.(251|252)') %}PAE Test lab {% endif %}simulated device</entry>
 {% endif %}
 {% if device.id|lower is search('air-') %}
       <entry name="cliError"><![CDATA[Incorrect usage.  Use the '?' or <TAB> key to list commands.]]></entry>
@@ -21,9 +22,9 @@
         <entry name="ips">{{ first_available_ip }}-{{ device.num }}</entry>
       </key>
       <!-- SNMP community name -->
-      <key name="{{ device.community|default('cisco') }}">
+      <key name="{% if device.snmpv3|default(false)|bool %}{{ device.v3authusername }}{% else %}{{ device.community|default('cisco') }}{% endif %}">
         <entry name="prompt">{HOST}#</entry>
-{% if device.snmp|default(false)|bool %}
+{% if device.snmpv2|default(false)|bool or device.snmpv3|default(false)|bool %}
         <entry name="walkFile">../recordings/snmp/{{ device.id }}.snmp</entry>
 {% endif %}
 {% if device.ssh|default(false)|bool %}
@@ -31,6 +32,13 @@
 {% endif %}
 {% if device.netconf|default(false)|bool %}
         <entry name="netconfFile">../recordings/nconf/{{ device.id }}.nconf</entry>
+{% endif %}
+{% if device.snmpv3|default(false)|bool %}
+        <entry name="v3UserName">{{ device.v3authusername }}</entry>
+        <entry name="v3AuthProtocol">{{ device.v3authprotocol }}</entry>
+        <entry name="v3AuthPassword">{{ device.v3authpassword }}</entry>
+        <entry name="v3PrivPassword">{{ device.v3privpassword }}</entry>
+        <entry name="v3PrivProtocol">{{ device.v3privprotocol }}</entry>
 {% endif %}
       </key>
     </key>

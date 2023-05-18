@@ -16,7 +16,14 @@
         read_netconf_list: []
         read_username_list: []
         read_password_list: []
-        read_community_list: []
+        read_snmpv3_list: []
+        read_snmpv3username_list: []
+        read_snmpv3authpassword_list: []
+        read_snmpv3authprotocol_list: []
+        read_snmpv3privpassword_list: []
+        read_snmpv3privprotocol_list: []
+        read_snmpv2_list: []
+        read_snmpv2_community_list: []
     - include_tasks:
         file: task_get_device_info.yml
         apply:
@@ -43,7 +50,14 @@
       read_netconf_list: []
       read_username_list: []
       read_password_list: []
-      read_community_list: []
+      read_snmpv3_list: []
+      read_snmpv3username_list: []
+      read_snmpv3authpassword_list: []
+      read_snmpv3authprotocol_list: []
+      read_snmpv3privpassword_list: []
+      read_snmpv3privprotocol_list: []
+      read_snmpv2_list: []
+      read_snmpv2_community_list: []
   - include_tasks:
       file: task_get_device_info.yml
       apply:
@@ -54,13 +68,13 @@
       loop_var: id_item
   - name: define active_dev_info
     ansible.builtin.set_fact:
-      active_dev_info: "{{ active_dev_info|default(['Product,Address,SNMP,SSH,NetConf,AVM,Username,Password,SNMP Community']) + [([task_item.0] + task_item.1|flatten)|join(',')] }}"
+      active_dev_info: "{{ active_dev_info|default(['Product,Address,SNMPv2,SNMPv3,SSH,NetConf,AVM,Username,Password,SNMPv2 Community,SNMPv3 Username,SNMPv3 AuthProtocol,SNMPv3 AuthPassword,SNMPv3 PrivProtocol,SNMPv3 PrivPassword']) + [([task_item.0] + task_item.1|flatten)|join(',')] }}"
     loop: "{{ mylists }}"
     loop_control:
       loop_var: task_item
       label: "{{ task_item|flatten }}"
     vars:
-      mylists: "{{ read_device_list|zip(read_ip_list|zip(read_snmp_list|zip(read_ssh_list|zip(read_netconf_list|zip(active_avmid_list|zip(read_username_list|zip(read_password_list|zip(read_community_list)))))))) }}"
+      mylists: "{{ read_device_list|zip(read_ip_list|zip(read_snmpv2_list|zip(read_snmpv3_list|zip(read_ssh_list|zip(read_netconf_list|zip(active_avmid_list|zip(read_username_list|zip(read_password_list|zip(read_snmpv2_community_list|zip(read_snmpv3username_list|zip(read_snmpv3authprotocol_list|zip(read_snmpv3authpassword_list|zip(read_snmpv3privprotocol_list|zip(read_snmpv3privpassword_list)))))))))))))) }}"
   - name: write active device info to file
     ansible.builtin.copy:
       content: "{{ active_dev_info|join('\n')|replace('True','yes')|replace('False','no') }}"

@@ -1,4 +1,4 @@
-<!-- Generic device config -->
+<!-- Simulated device config -->
 <key name="avm{{ first_available_id }}">
   <key name="agents">
     <key name="{{ device.id }}">
@@ -12,6 +12,7 @@
       <entry name="ssh">2</entry>
       <entry name="Username">{{ device.username }}</entry>
       <entry name="Password">{{ device.password }}</entry>
+      <entry name="loginBanner">\nThis is a {% if ansible_host is search('172.30.(251|252)') %}PAE Test lab {% endif %}simulated device</entry>
 {% endif %}
 {% if device.id|lower is search('air-') %}
       <entry name="cliError"><![CDATA[Incorrect usage.  Use the '?' or <TAB> key to list commands.]]></entry>

@@ -83,7 +83,7 @@ screen
 %post
 # Add search domain
 echo 'DOMAIN="{{ sysconfig.secondary.domain_name if 'dr' in group_names else sysconfig.primary.domain_name }}"' >> /etc/sysconfig/network-scripts/ifcfg-{{ netconfig.nic1.intname }}
-{% if netconfig.nic2.intname != '' %}
+{% if netconfig.nic2.ipaddress != '' %}
 {% block nic2_domain %}
 echo 'DOMAIN="{{ sysconfig.secondary.domain_name if 'dr' in group_names else sysconfig.primary.domain_name }}"' >> /etc/sysconfig/network-scripts/ifcfg-{{ netconfig.nic2.intname }}
 {% endblock nic2_domain %}
@@ -94,9 +94,10 @@ echo 'DOMAIN="{{ sysconfig.secondary.domain_name if 'dr' in group_names else sys
 {% block profile_config %}
 cat <<EOF > /etc/profile.d/setproxy.sh
 unset {http,https,ftp,no}_proxy; unset {HTTP,HTTPS,FTP,NO}_PROXY; unset proxy_address
-export http_proxy={{ proxy_address }}
-export https_proxy={{ proxy_address }}
-export ftp_proxy={{ proxy_address }}
+proxy_address="{{ proxy_address }}"
+export http_proxy=\${proxy_address}
+export https_proxy=\${proxy_address}
+export ftp_proxy=\${proxy_address}
 export no_proxy=".cisco.com,.cisco-pae.com,.staging.cisco-cms.com,.cisco-cms.com,172.19.0.0/16,172.23.0.0/16,172.30.0.0/16"
 EOF
 {% endblock profile_config %}

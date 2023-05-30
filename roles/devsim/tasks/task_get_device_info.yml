@@ -9,8 +9,9 @@
     register: reg_devinfo
   - name: define read device info lists
     ansible.builtin.set_fact:
+      read_avmid_list: "{{ read_avmid_list|default([]) + [avm_id] }}"
       read_device_list: "{{ read_device_list|default([]) + [reg_devinfo.stdout_lines[0]] }}"
-      read_ip_list: "{{ read_ip_list|default([]) + [reg_devinfo.stdout_lines|select('search', '\"ips\"')|regex_replace('^.*ips\">(.*)</e.*$','\\1')] }}"
+      read_ip_list: "{{ read_ip_list|default([]) + [devip] }}"
       read_ssh_list: "{{ read_ssh_list|default([]) + [reg_devinfo.stdout_lines|select('search','ssh')|length == 1] }}"
       read_username_list: "{{ read_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Username')|regex_replace('^.*Username\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','ssh')|length == 1 else ''] }}"
       read_password_list: "{{ read_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Password')|regex_replace('^.*Password\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','ssh')|length == 1 else ''] }}"
@@ -23,4 +24,15 @@
       read_snmpv3privprotocol_list: "{{ read_snmpv3privprotocol_list|default([]) + [reg_devinfo.stdout_lines|select('search','v3PrivProtocol')|regex_replace('^.*v3PrivProtocol\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','v3PrivProtocol')|length == 1 else ''] }}"
       read_snmpv2_list: "{{ read_snmpv2_list|default([]) + [reg_devinfo.stdout_lines|select('search','walkFile')|length == 1 and reg_devinfo.stdout_lines|select('search','v3UserName')|length == 0] }}"
       read_snmpv2_community_list: "{{ read_snmpv2_community_list|default([]) + [reg_devinfo.stdout_lines|select('search','key name')|regex_replace('^.*=\"(.*)\">.*$','\\1') if reg_devinfo.stdout_lines|select('search','walkFile')|length == 1 and reg_devinfo.stdout_lines|select('search','v3UserName')|length == 0 else ''] }}"
+    loop: "{{ range(0,numips|int)|list }}"
+    loop_control:
+      loop_var: num_item
+    vars:
+      numips: "{{ reg_devinfo.stdout_lines|select('search', '\"ips\"')|regex_replace('^.*ips\">(.*)</e.*$','\\1')|split('-')|last }}"
+      baseip: "{{ reg_devinfo.stdout_lines|select('search', '\"ips\"')|regex_replace('^.*ips\">(.*)</e.*$','\\1')|split('-')|first }}"
+      previp: "{{ read_ip_list[-1]|default(baseip) }}"
+      ipincr: "{{ '3' if previp.split('.')|last == '254' else '2' if previp.split('.')|last == '255' else '1' }}"
+      devip: "{{ previp|ansible.utils.ipmath(ipincr) if num_item > 0 else baseip }}"
+  vars:
+    avm_file: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avm_id }}.xml"
   tags: [ 'never', 'devsim' ]

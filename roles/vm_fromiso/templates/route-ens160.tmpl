@@ -1,4 +1,4 @@
-{% if hostvars[groups['vcenter'][0]]['information']['datacenter']|lower is search('staging') %}
+{% if hostvars[groups['vcenter'][0]]['information']['datacenter']|lower is regex('staging|stg') %}
 {% block staging %}
 ADDRESS0=172.23.251.0
 GATEWAY0={{ build.primary.octets }}.62
@@ -32,15 +32,7 @@ GATEWAY4={{ build.primary.octets }}.62
 ADDRESS5=172.30.251.0
 NETMASK5=255.255.255.0
 GATEWAY5={{ build.primary.octets }}.62
-{% if hostvars[groups['vcenter'][0]]['information']['datacenter'] is regex('RTP5|Alln1') %}
-{% block prod %}
-{% if build.disaster_recovery and inventory_hostname is regex('em7prt|rly') %}
-ADDRESS6={{ build.secondary.octets }}.0
-NETMASK6=255.255.255.{{ '0' if inventory_hostname is regex('em7prt') else '192' }}
-GATEWAY6={{ build.primary.octets }}.62
-{% endif %}
-{% endblock prod %}
-{% else %}
+{% if hostvars[groups['vcenter'][0]]['information']['datacenter'] is not regex('RTP5|Alln1') %}
 {% block lab %}
 ADDRESS6=172.30.240.0
 NETMASK6=255.255.255.0
@@ -48,11 +40,6 @@ GATEWAY6={{ build.primary.octets }}.62
 ADDRESS7=172.30.251.0
 NETMASK7=255.255.255.0
 GATEWAY7={{ build.primary.octets }}.62
-{% if build.disaster_recovery and inventory_hostname is regex('em7prt|rly') %}
-ADDRESS8={{ build.secondary.octets }}.0
-NETMASK8=255.255.255.{{ '0' if inventory_hostname is regex('em7prt') else '192' }}
-GATEWAY8={{ build.primary.octets }}.62
-{% endif %}
 {% endblock lab %}
 {% endif %}
 {% endif %}

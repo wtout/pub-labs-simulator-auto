@@ -3,7 +3,7 @@
 - block:
   - include_tasks: task_get_vm_datastore.yml
     when:
-      - hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datastore_cluster'] == '' or (inventory_hostname is search('em7') and hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['deptype'] == 'h')
+      - hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datastore_cluster'] == ''
 
   - include_tasks: task_create_kickstart_iso.yml
   - include_tasks: task_copy_kickstart_iso_to_vsphere.yml

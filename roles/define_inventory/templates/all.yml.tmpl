@@ -2,7 +2,7 @@
 # Variables for all hosts
 
 ##################################################################################
-# Customer specific information
+# build specific information
 ##################################################################################
 build:
 
@@ -14,8 +14,8 @@ build:
 
   version:
 
-    # CentOS ISO (string)
-    centos_iso: '{{ environment_definition.build.version.centos_iso if environment_definition.build.version.centos_iso != none else 'CentOS-7-x86_64-Everything-2009.iso' }}'
+    # OS ISO (string)
+    os_iso: '{{ environment_definition.build.version.os_iso if environment_definition.build.version.os_iso != none else 'CentOS-7-x86_64-Everything-2009.iso' }}'
 
   primary:
 
@@ -57,7 +57,7 @@ datacenter:
     cluster: '{{ environment_definition.datacenter.primary.cluster if environment_definition.datacenter.primary.cluster != none else "" }}'
 
     # Required if a custom folder name is to be used
-    # The primary folder to host the customer's primary stack
+    # The primary folder to host the build's primary stack
     folder: '{{ environment_definition.datacenter.primary.folder if environment_definition.datacenter.primary.folder != none else "" }}'
 
     # ONLY for on-premise deployments, define the list of esxi hosts (resources) to use (string)
@@ -75,7 +75,7 @@ datacenter:
     cluster: '{{ environment_definition.datacenter.secondary.cluster if environment_definition.datacenter.secondary.cluster != none else "" }}'
 
     # Required if a custom folder name is to be used
-    # The secondary folder to host the customer's secondary stack
+    # The secondary folder to host the build's secondary stack
     folder: '{{ environment_definition.datacenter.secondary.folder if environment_definition.datacenter.secondary.folder != none else "" }}'
 
     # ONLY for on-premise deployments, define the list of esxi hosts (resources) to use (string)
@@ -108,4 +108,4 @@ sysconfig:
     domain_name: "{{ (('staging.' if environment_definition.datacenter.secondary.name is regex('RTP-Staging|STG') else '') + 'cisco-' + ('pae' if environment_definition.datacenter.secondary.name is regex('PAE-HX-DC-2|PAE-HX-DC-3|Dev Engineering') else 'cms') + '.com') if environment_definition.build.disaster_recovery else '' }}"
 
     # NTP server
-    ntp_server: {{ (([environment_definition.drvm_setting.sysconfig.ntp_server|unique|join(', ')] if environment_definition.drvm_setting.sysconfig.ntp_server|type_debug == 'list' else ("'" + environment_definition.drvm_setting.sysconfig.ntp_server|string + "'")) if environment_definition.drvm_setting.sysconfig.ntp_server is defined else "'{{ build.secondary.octets }}.254'" if environment_definition.build.disaster_recovery else '' }}
+    ntp_server: {{ (([environment_definition.drvm_setting.sysconfig.ntp_server|unique|join(', ')] if environment_definition.drvm_setting.sysconfig.ntp_server|type_debug == 'list' else ("'" + environment_definition.drvm_setting.sysconfig.ntp_server|string + "'")) if environment_definition.drvm_setting.sysconfig.ntp_server is defined else "'{{ build.secondary.octets }}.254'") if environment_definition.build.disaster_recovery else '' }}

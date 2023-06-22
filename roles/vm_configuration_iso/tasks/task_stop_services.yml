@@ -8,9 +8,10 @@
           service: "{{ service_item }}"
           action: 'stopped'
           state: 'false'
+    when: service_item != ''
     loop:
       - firewalld
-      - iptables
+      - "{{ 'iptables' if build.version.os_iso|lower is search('centos') else '' }}"
     loop_control:
-      loop_var: service_item      
+      loop_var: service_item
   tags: vm_configuration

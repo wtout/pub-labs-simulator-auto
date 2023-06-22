@@ -10,7 +10,7 @@
     ansible.builtin.set_fact:
       active_avmid_list: "{{ reg_active.stdout_lines|map('int')|sort|map('string') }}"
   rescue:
-  - name: reboot the device simulator VM
+  - name: reboot the VM
     ansible.builtin.reboot:
     when: reg_active.stderr is search('Cannot allocate memory')
     become: "{{ true if ansible_user != 'root' else false }}"

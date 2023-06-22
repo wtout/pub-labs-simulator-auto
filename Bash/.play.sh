@@ -42,26 +42,64 @@ function check_arguments() {
 	fi
 }
 
+function get_os() {
+	local MYRELEASE
+	MYRELEASE=$(grep _MANTISBT_PROJECT= /etc/os-release|cut -d '"' -f2)
+	if [[ "${MYRELEASE}" != "" ]]	
+	then
+		echo ${MYRELEASE}
+		return 0
+	else
+		return 1
+	fi
+}
+
 function check_docker_login() {
-	if [[ ! -f ${HOME}/.docker/config.json || "$(grep $(echo ${CONTAINERREPO}|cut -d '/' -f1) ${HOME}/.docker/config.json)" == "" ]]
+	local MYRELEASE
+	local MYDOMAIN
+	local MYJSONFILE
+	MYDOMAIN=$(echo ${CONTAINERREPO}|cut -d '/' -f1)
+	MYRELEASE=$(get_os)
+	case ${MYRELEASE} in
+		CentOS-7)
+			MYJSONFILE=${HOME}/.docker/config.json
+			;;
+		AlmaLinux*)
+			MYJSONFILE=${XDG_RUNTIME_DIR}/containers/auth.json
+			;;
+		*)
+			;;
+	esac
+	if [[ ! -f ${MYJSONFILE} || "$(grep ${MYDOMAIN} ${MYJSONFILE})" == "" ]]
 	then
 		if [[ $(check_image; echo "${?}") -ne 0 ]]
 		then
-			echo "You must login to containers repository to gain access to images before running this automation"
+			echo -e "You must login to ${MYDOMAIN} to gain access to images before running this automation"
 			exit 1
 		else
-			echo "You must login to containers repository to gain access to automation images"
+			echo -e "You must login to ${MYDOMAIN} to gain access to automation images"
 		fi
 	fi
 }
 
 function docker_cmd() {
-	if [[ -f /etc/systemd/system/docker@.service ]]
-	then
-		echo "docker -H unix:///var/run/docker-$(whoami).sock"
-	else
-		echo "docker"
-	fi
+	local MYRELEASE
+	MYRELEASE=$(get_os)
+	case ${MYRELEASE} in
+		CentOS-7)
+			if [[ -f /etc/systemd/system/docker@.service ]]
+			then
+				echo "docker -H unix:///var/run/docker-$(whoami).sock"
+			else
+				echo "docker"
+			fi
+			;;
+		AlmaLinux*)
+			echo "docker"
+			;;
+		*)
+			;;
+	esac
 }
 
 function restart_docker() {
@@ -88,21 +126,22 @@ function check_image() {
 }
 
 function check_container() {
-	$(docker_cmd) ps | grep -w ${CONTAINERNAME} &>/dev/null
+	$(docker_cmd) ps -a | grep -w ${CONTAINERNAME} &>/dev/null
 	return ${?}
 }
 
 function start_container() {
 	if [[ $(check_container; echo "${?}") -ne 0 ]]
 	then
+		[[ ! -d ${HOME}/.ssh ]] && mkdir ${HOME}/.ssh
 		sleep 10
 		echo "Starting container ${CONTAINERNAME}"
 		[[ $- =~ x ]] && debug=1 && [[ "${SECON}" == "true" ]] && set +x
 		if [[ "${ANSIBLE_LOG_PATH}" == "" ]]
 		then
-			$(docker_cmd) run --rm -e MYPROXY=${PROXY_ADDRESS} -e MYHOME=${HOME} -e MYHOSTNAME=$(hostname) -e MYCONTAINERNAME=${CONTAINERNAME} -e MYIP=$(get_host_ip) --user ansible -w ${CONTAINERWD} -v /data:/data:z -v /tmp:/tmp:z -v ${HOME}/certificates:/home/ansible/certificates:z -v ${PWD}:${CONTAINERWD}:z --name ${CONTAINERNAME} -it -d --entrypoint /bin/bash ${CONTAINERREPO}:${ANSIBLE_VERSION}
+			$(docker_cmd) run --rm -e MYPROXY=${PROXY_ADDRESS} -e MYHOME=${HOME} -e MYHOSTNAME=$(hostname) -e MYCONTAINERNAME=${CONTAINERNAME} -e MYIP=$(get_host_ip) --user ansible -w ${CONTAINERWD} -v /data:/data:z -v /tmp:/tmp:z -v ${PWD}:${CONTAINERWD}:z --name ${CONTAINERNAME} -it -d --entrypoint /bin/bash ${CONTAINERREPO}:${ANSIBLE_VERSION}
 		else
-			$(docker_cmd) run --rm -e ANSIBLE_LOG_PATH=${ANSIBLE_LOG_PATH} -e ANSIBLE_FORKS=${NUM_HOSTSINPLAY} -e MYPROXY=${PROXY_ADDRESS} -e MYHOME=${HOME} -e MYHOSTNAME=$(hostname) -e MYCONTAINERNAME=${CONTAINERNAME} -e MYIP=$(get_host_ip) --user ansible -w ${CONTAINERWD} -v /data:/data:z -v /tmp:/tmp:z -v ${HOME}/certificates:/home/ansible/certificates:z -v ${HOME}/.ssh:/home/ansible/.ssh:z -v ${PWD}:${CONTAINERWD}:z --name ${CONTAINERNAME} -it -d --entrypoint /bin/bash ${CONTAINERREPO}:${ANSIBLE_VERSION}
+			$(docker_cmd) run --rm -e ANSIBLE_LOG_PATH=${ANSIBLE_LOG_PATH} -e ANSIBLE_FORKS=${NUM_HOSTSINPLAY} -e MYPROXY=${PROXY_ADDRESS} -e MYHOME=${HOME} -e MYHOSTNAME=$(hostname) -e MYCONTAINERNAME=${CONTAINERNAME} -e MYIP=$(get_host_ip) --user ansible -w ${CONTAINERWD} -v /data:/data:z -v /tmp:/tmp:z -v ${HOME}/.ssh:/home/ansible/.ssh:z -v ${PWD}:${CONTAINERWD}:z --name ${CONTAINERNAME} -it -d --entrypoint /bin/bash ${CONTAINERREPO}:${ANSIBLE_VERSION}
 		fi
 		[[ ${debug} == 1 ]] && set -x
 		[[ $(check_container; echo "${?}") -ne 0 ]] && echo "Unable to start container ${CONTAINERNAME}" && exit 1
@@ -139,8 +178,7 @@ function check_hosts_limit() {
 		MYHOSTS=$(echo "${MYARGS}" | awk -F "${ARG_NAME} " '{print $NF}' | awk -F ' -' '{print $1}')
 		[[ "$(echo "${MYARGS}" | grep -Ew '\-\-tags')" != "" ]] && MYTAGS=$(echo "${MYARGS}" | awk -F '--tags ' '{print $NF}' | awk -F ' -' '{print $1}')
 		[[ "${MYTAGS}" == "" ]] && UPDATE_ARGS=1
-		[[ "$(echo "${MYTAGS}" | grep -Ew 'vm_creation|capcheck|infra_configure')" != "" ]] && UPDATE_ARGS=1
-		[[ "$(echo "${MYTAGS}" | grep -Ew 'infra_build_nodes')" != "" ]] && UPDATE_ARGS=2
+		[[ "$(echo "${MYTAGS}" | grep -Ew 'vm_creation|capcheck')" != "" ]] && UPDATE_ARGS=1
 		if [[ "$(echo "${MYHOSTS}" | grep 'dr')" == "" ]]
 		then
 			VCENTERS='vcenter'
@@ -155,9 +193,6 @@ function check_hosts_limit() {
 		if [[ ${UPDATE_ARGS} -eq 1 ]]
 		then
 			NEWARGS=$(echo "${MYARGS}" | sed "s/${MYHOSTS}/${MYHOSTS},${VCENTERS}/")
-		elif [[ ${UPDATE_ARGS} -eq 2 ]]
-		then
-			NEWARGS=$(echo "${MYARGS}" | sed "s/${MYHOSTS}/${MYHOSTS},${VCENTERS},nexus/")
 		else
 			NEWARGS="${MYARGS}"
 		fi
@@ -302,7 +337,7 @@ function get_creds_prefix() {
 			Alln1 | RTP5 | *Build*)
 				CREDS_PREFIX='PROD_'
 				;;
-			RTP-Staging)
+			RTP-Staging | STG*)
 				CREDS_PREFIX='STG_'
 				;;
 			PAE-External)

@@ -25,7 +25,7 @@
         vars:
           device: "{{ device_item }}"
           avm_action: 'start'
-    loop: "{{ device_list }}"
+    loop: "{{ device_list|default([]) }}"
     loop_control:
       loop_var: device_item
     when: deploy_devsim|default(false)|bool

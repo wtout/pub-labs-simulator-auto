@@ -82,6 +82,7 @@
       content: "{{ active_dev_info|join('\n')|replace('True','yes')|replace('False','no') }}"
       dest: "{{ auto_dir }}/active_simulated_devices.csv"
     delegate_to: localhost
+    become: yes
   - name: define active_id_ip
     ansible.builtin.set_fact:
       active_id_ip: "{{ active_id_ip|default([]) + [([task_item.0] + task_item.1)|join(' || ')] }}"

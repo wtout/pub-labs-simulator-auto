@@ -1,6 +1,6 @@
 # README #
 
-This README provides instructions and information to get your Ansible control machine up and running with the automation package to deploy the device simulator.
+This README provides instructions and information to get your Linux machine up and running with the automation package to deploy the device simulator.
 
 
 ### What is this repository for? ###
@@ -34,7 +34,7 @@ On a newly installed Linux **CentOS 7.7+** VM that has docker installed and conf
 
 ### System definition ###
 
-Create your own system definition file under the _``Definitions``_ directory to contain the information defining the instance to deploy. Use the included _``cust_build_info.yml``_ file as template
+Create your own system definition file under the _``Definitions``_ directory to contain the information defining the instance to deploy. Use the included _``build_def_info.yml``_ file as template
 
 ***Note**: If you choose to make changes to git tracked items such as directory names or file names or content of files downloaded from the repository, be aware that your changes will be lost every time the automated installation package is updated*
 
@@ -68,7 +68,9 @@ To create the system inventory without deploying the system, issue the following
 
 ### ISO Image ###
 
-The tool automatically creates a symbolic link to the _``Packages``_ directory in the automation directory. The _``Packages``_ directory points to a _``Packages``_ directory under /data, if it exists. If it does not exist, the _``Packages``_ directory will be created under the automation directory. User must ensure that the OS ISO image to be used is available on the Ansible/deployment machine under _``/data/Packages/ISO``_ prior to starting the automated build process.
+The tool automatically creates a symbolic link to the _``/data/Packages``_ directory in the automation directory. The _``Packages``_ link points to a _``Packages``_ directory under /data, if it exists. If it does not exist, the automation will stop with an error message. The user must ensure that the OS ISO image to be used is available on the Linux utility/deployment machine under _``/data/Packages/ISO``_ prior to starting the automated build process.
+
+If the _``/data/Packages``_ directory does not exist, the user must create a _``Packages/ISO``_ directory in the automation directory and copy the ISO image to it prior to starting the automated build process.
 
 
 ### System Deployment ###
@@ -83,7 +85,7 @@ with the _``system-name``_ being the name of the system definition file from "Sy
 
 - ``play_rollback.sh``
 
-  Script output is automatically saved to a log file. The file is saved under _``Logs/<script-name>.<system-name>.log.<time-stamp>``_ on the Ansible control machine
+  Script output is automatically saved to a log file. The file is saved under _``Logs/<script-name>.<system-name>.log.<time-stamp>``_ on the Linux machine
 
 ***Note**: Running multiple instances of the same script for a given build simultaneously is prohibited*
 
@@ -95,11 +97,9 @@ with the _``system-name``_ being the name of the system definition file from "Sy
 The list of roles used in the playbooks:
 
   - **define_inventory**: generates the system inventory from the system definition file
-  - **collect_info**: prompts the user for required information
   - **check_creds**: validates the user's credentials
   - **todo**: determines what roles and/or tasks to execute
   - **vm_facts**: defines the individual VM facts required in the playbook
-  - **ssh_keys**: creates and deploys SSH keys to the bastion server(s) if applicable
   - **capcheck**: performs a capacity check of the infrastructure
   - **vm_fromiso**: deploys the stack's VMs from ISO
   - **vm_hardening**: enables hardening on the VMS created from ISO

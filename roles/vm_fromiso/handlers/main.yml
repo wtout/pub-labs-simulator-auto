@@ -9,45 +9,12 @@
   tags: vm_creation
 
 - name: expand disk0
-  ansible.builtin.parted:
-    device: /dev/sda
-    unit: MiB
-    number: 2
+  ansible.builtin.shell: |
+    for BUS in /sys/class/scsi_disk/*/device/rescan; do echo 1 > ${BUS}; done
+    echo -e "d\n3\nn\np\n3\n\n\nw\n" | fdisk /dev/sda
+    partprobe
+    xfs_growfs $(grep ' / ' /etc/fstab | awk '{print $2}')
   become: "{{ true if ansible_user != 'root' else false }}"
-  register: parted_info
-  changed_when: parted_info is succeeded
-  notify: define parted_start
-  tags: vm_creation
-
-- name: define parted_start
-  ansible.builtin.set_fact:
-    parted_start: "{{ task_item.begin | default(0) }}"
-  loop: "{{ parted_info.partitions }}"
-  loop_control:
-    loop_var: task_item
-  when: task_item.num == 2
-  changed_when: parted_info is succeeded
-  notify: delete old disk0 partition
-  tags: vm_creation
-
-- name: delete old disk0 partition
-  ansible.builtin.parted:
-    device: /dev/sda
-    number: 2
-    state: absent
-  become: "{{ true if ansible_user != 'root' else false }}"
-  notify: create new disk0 partition
-  tags: vm_creation
-
-- name: create new disk0 partition
-  ansible.builtin.parted:
-    device: /dev/sda
-    number: 2
-    flags: [ lvm ]
-    part_start: "{{ parted_start }}MiB"
-    state: present
-  become: "{{ true if ansible_user != 'root' else false }}"
-  notify: reboot vm
   tags: vm_creation
 
 - name: reboot vm
@@ -59,6 +26,24 @@
 
 - name: expand disk1
   ansible.builtin.shell: |
+    mp1=$(df -h | grep sdb1 | awk '{print $NF}')
+    umount ${mp1}
+    {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    [[ "${mp1}" != "{{ vm.disk1_mount }}" ]] && mv ${mp1} {{ vm.disk1_mount }}
+    for BUS in /sys/class/scsi_disk/*/device/rescan; do echo 1 > ${BUS}; done
+    parted -s /dev/sdb resizepart 1 100%
+    {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    disk1_uuid=$(blkid | grep sdb1 | awk '{print $2}' | sed 's|"||g')
+    sed -i "s|^\(.*${disk1_uuid}\) /[[:alnum:]]* xfs|\1 {{ vm.disk1_mount }} xfs|" /etc/fstab
+    {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    mount -a
+    xfs_growfs -d {{ vm.disk1_mount }}
+  become: "{{ true if ansible_user != 'root' else false }}"
+  tags: vm_creation
+
+- name: add disk1
+  ansible.builtin.shell: |
+    for BUS in /sys/class/scsi_host/host*/scan; do echo "- - -" > ${BUS}; done
     echo -e "n\np\n\n\n\nw\n" | fdisk /dev/sdb
   become: "{{ true if ansible_user != 'root' else false }}"
   notify: create disk1 filesystem
@@ -69,25 +54,33 @@
     fstype: xfs
     device: /dev/sdb1
   become: "{{ true if ansible_user != 'root' else false }}"
-  notify: set opt mount points
+  notify: get disk1 UUID
   tags: vm_creation
 
-- name: set opt mount points
-  ansible.builtin.mount:
-    name: /opt
-    src: /dev/sdb1
+- name: get disk1 UUID
+  ansible.builtin.shell: |
+    blkid | grep sdb1 | awk '{print $2}' | sed 's|"||g'
+  register: reg_disk1_uuid
+  become: "{{ true if ansible_user != 'root' else false }}"
+  notify: set disk1 mount points
+  tags: vm_creation
+
+- name: set disk1 mount points
+  ansible.posix.mount:
+    name: "{{ vm.disk1_mount }}"
+    src: "{{ reg_disk1_uuid.stdout }}"
     fstype: xfs
     opts: defaults
     state: mounted
     dump: '1'
     passno: '2'
   become: "{{ true if ansible_user != 'root' else false }}"
-  notify: set permissions and ownership of /opt
+  notify: set permissions and ownership of disk1
   tags: vm_creation
 
-- name: set permissions and ownership of /opt
+- name: set permissions and ownership of disk1
   ansible.builtin.file:
-    path: /opt
+    path: "{{ vm.disk1_mount }}"
     state: directory
     mode: 0755
     owner: root
@@ -97,6 +90,24 @@
 
 - name: expand disk2
   ansible.builtin.shell: |
+    mp2=$(df -h | grep sdc1 | awk '{print $NF}')
+    umount ${mp2}
+    {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    [[ "${mp2}" != "{{ vm.disk2_mount }}" ]] && mv ${mp2} {{ vm.disk2_mount }}
+    for BUS in /sys/class/scsi_disk/*/device/rescan; do echo 1 > ${BUS}; done
+    parted -s /dev/sdc resizepart 1 100%
+    {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    disk2_uuid=$(blkid | grep sdc1 | awk '{print $2}' | sed 's|"||g')
+    sed -i "s|^\(.*${disk2_uuid}\) /[[:alnum:]]* xfs|\1 {{ vm.disk2_mount }} xfs|" /etc/fstab
+    {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    mount -a
+    xfs_growfs -d {{ vm.disk2_mount }}
+  become: "{{ true if ansible_user != 'root' else false }}"
+  tags: vm_creation
+
+- name: add disk2
+  ansible.builtin.shell: |
+    for BUS in /sys/class/scsi_host/host*/scan; do echo "- - -" > ${BUS}; done
     echo -e "n\np\n\n\n\nw\n" | fdisk /dev/sdc
   become: "{{ true if ansible_user != 'root' else false }}"
   notify: create disk2 filesystem
@@ -107,25 +118,33 @@
     fstype: xfs
     device: /dev/sdc1
   become: "{{ true if ansible_user != 'root' else false }}"
-  notify: set data01 mount points
+  notify: get disk2 UUID
   tags: vm_creation
 
-- name: set data01 mount points
-  ansible.builtin.mount:
-    name: /data01
-    src: /dev/sdc1
+- name: get disk2 UUID
+  ansible.builtin.shell: |
+    blkid | grep sdc1 | awk '{print $2}' | sed 's|"||g'
+  register: reg_disk2_uuid
+  become: "{{ true if ansible_user != 'root' else false }}"
+  notify: set disk2 mount points
+  tags: vm_creation
+
+- name: set disk2 mount points
+  ansible.posix.mount:
+    name: "{{ vm.disk2_mount }}"
+    src: "{{ reg_disk2_uuid.stdout }}"
     fstype: xfs
     opts: defaults
     state: mounted
     dump: '1'
     passno: '2'
   become: "{{ true if ansible_user != 'root' else false }}"
-  notify: set permissions and ownership of /data01
+  notify: set permissions and ownership of disk2
   tags: vm_creation
 
-- name: set permissions and ownership of /data01
+- name: set permissions and ownership of disk2
   ansible.builtin.file:
-    path: /data01
+    path: "{{ vm.disk2_mount }}"
     state: directory
     mode: 0755
     owner: root
@@ -135,6 +154,24 @@
 
 - name: expand disk3
   ansible.builtin.shell: |
+    mp3=$(df -h | grep sdd1 | awk '{print $NF}')
+    umount ${mp3}
+    {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    [[ "${mp3}" != "{{ vm.disk3_mount }}" ]] && mv ${mp3} {{ vm.disk3_mount }}
+    for BUS in /sys/class/scsi_disk/*/device/rescan; do echo 1 > ${BUS}; done
+    parted -s /dev/sdd resizepart 1 100%
+    {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    disk3_uuid=$(blkid | grep sdd1 | awk '{print $2}' | sed 's|"||g')
+    sed -i "s|^\(.*${disk3_uuid}\) /[[:alnum:]]* xfs|\1 {{ vm.disk3_mount }} xfs|" /etc/fstab
+    {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    mount -a
+    xfs_growfs -d {{ vm.disk3_mount }}
+  become: "{{ true if ansible_user != 'root' else false }}"
+  tags: vm_creation
+
+- name: add disk3
+  ansible.builtin.shell: |
+    for BUS in /sys/class/scsi_host/host*/scan; do echo "- - -" > ${BUS}; done
     echo -e "n\np\n\n\n\nw\n" | fdisk /dev/sdd
   become: "{{ true if ansible_user != 'root' else false }}"
   notify: create disk3 filesystem
@@ -145,25 +182,33 @@
     fstype: xfs
     device: /dev/sdd1
   become: "{{ true if ansible_user != 'root' else false }}"
-  notify: set data02 mount points
+  notify: get disk3 UUID
   tags: vm_creation
 
-- name: set data02 mount points
-  ansible.builtin.mount:
-    name: /data02
-    src: /dev/sdd1
+- name: get disk3 UUID
+  ansible.builtin.shell: |
+    blkid | grep sdd1 | awk '{print $2}' | sed 's|"||g'
+  register: reg_disk3_uuid
+  become: "{{ true if ansible_user != 'root' else false }}"
+  notify: set disk3 mount points
+  tags: vm_creation
+
+- name: set disk3 mount points
+  ansible.posix.mount:
+    name: "{{ vm.disk3_mount }}"
+    src: "{{ reg_disk3_uuid.stdout }}"
     fstype: xfs
     opts: defaults
     state: mounted
     dump: '1'
     passno: '2'
   become: "{{ true if ansible_user != 'root' else false }}"
-  notify: set permissions and ownership of /data02
+  notify: set permissions and ownership of disk3
   tags: vm_creation
 
-- name: set permissions and ownership of /data02
+- name: set permissions and ownership of disk3
   ansible.builtin.file:
-    path: /data02
+    path: "{{ vm.disk3_mount }}"
     state: directory
     mode: 0755
     owner: root

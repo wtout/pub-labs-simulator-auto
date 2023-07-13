@@ -83,6 +83,7 @@
       dest: "{{ auto_dir }}/active_simulated_devices.csv"
     delegate_to: localhost
     become: yes
+    when: active_dev_info|default([]) != []
   - name: define active_id_ip
     ansible.builtin.set_fact:
       active_id_ip: "{{ active_id_ip|default([]) + [([task_item.0] + task_item.1)|join(' || ')] }}"
@@ -90,8 +91,6 @@
     loop_control:
       loop_var: task_item
       label: "{{ task_item|flatten }}"
-  - ansible.builtin.debug:
-    when: non_active_id_ip|default([]) != []
   - ansible.builtin.debug:
       msg:
         - "{{ ['Non-Active AVM ID || Non-Active Device ID || Non-Active Device IP'] + non_active_id_ip|default([]) }}"

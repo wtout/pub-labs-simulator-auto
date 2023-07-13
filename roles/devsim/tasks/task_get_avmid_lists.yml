@@ -7,7 +7,7 @@
       - include_tasks: task_get_active_avmid.yml
       - name: define avmid lists
         ansible.builtin.set_fact:
-          good_avmid_list: "{{ file_avmid_list | difference(file_avmid_list)|map('int')|sort|map('string') }}"
+          good_avmid_list: "{{ file_avmid_list | difference(active_avmid_list)|map('int')|sort|map('string') }}"
           bad_avmid_list: []
       when: AVMLIST|default('') == ''
     - name: define avmid lists

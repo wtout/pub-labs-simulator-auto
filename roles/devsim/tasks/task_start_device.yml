@@ -17,8 +17,9 @@
       check_mode: no
     - block:
       - name: get SSH user credentials from avm{{ avmid }}.xml
-        ansible.builtin.shell:
+        ansible.builtin.shell: |
           grep -E '^      <entry name="Username"|Password' /opt/{{automation_reponame }}/simulator/registry/avm{{ avmid }}.xml
+          grep -E '^        <entry name="ips"' /opt/{{automation_reponame }}/simulator/registry/avm{{ avmid }}.xml
         register: reg_creds
         check_mode: no
       - include_tasks:
@@ -75,7 +76,8 @@
             apply:
               vars:
                 avm_id: "{{ avmid }}"
-                max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320)]|max }}"
+                num_devices: "{{ reg_creds.stdout_lines|select('search','ips')|regex_replace('^.*ips\">.*-(.*)</e.*$','\\1') }}"
+                max_heap_size: "{{ [new_heap|int,(num_devices|int / 100)|round|int * 32 + (256 if num_devices|int < 900 else 320)]|max }}"
           vars:
             adj_heap: "{{ max_heap|int + 8 * (avmid|int - 100) }}"
             new_heap: "{{ [adj_heap|int,2048]|min }}"

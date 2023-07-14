@@ -8,9 +8,7 @@
     until: reg_ssh is succeeded
     retries: 13
     failed_when:
-      - reg_ssh.rc != 0
-      - reg_ssh.rc != 6
-      - reg_ssh.stderr_lines|select('search', 'Connection (timed out|refused)|No route to host') != []
+      - (reg_ssh.rc != 0 and reg_ssh.rc != 6 and reg_ssh.rc != 255) or reg_ssh.stderr_lines|select('search', 'Connection (timed out|refused)|No route to host') != []
   check_mode: no
   delegate_to: localhost
   tags: [ 'never', 'devsim' ]

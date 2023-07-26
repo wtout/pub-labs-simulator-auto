@@ -5,6 +5,9 @@
       <entry name="snmpClassName">com.sheer.tools.simulator.snmp.Cisco6400NspSnmpSimulator</entry>
       <entry name="telnetClassName">com.sheer.tools.simulator.telnet.Cisco7200TelnetSimulatorGenerator</entry>
       <entry name="enableEcho">true</entry>
+{% if device.api|default(false)|bool %}
+      <entry name="httpAuth">false</entry>
+{% endif %}
 {% if device.netconf|default(false)|bool %}
       <entry name="isNetConfEnabled">true</entry>
 {% endif %}
@@ -12,7 +15,7 @@
       <entry name="ssh">2</entry>
       <entry name="Username">{{ device.username }}</entry>
       <entry name="Password">{{ device.password }}</entry>
-      <entry name="loginBanner">\nThis is a {% if ansible_host is search('172.30.(251|252)') %}PAE Test lab {% endif %}simulated device</entry>
+      <entry name="loginBanner">\nThis is a {% if ansible_host is search('172.30.(251|252)') %}PAE Test lab {% elif ansible_host is search('172.23.)') %}PAE Staging {% endif %}simulated device</entry>
 {% endif %}
 {% if device.id|lower is search('air-') %}
       <entry name="cliError"><![CDATA[Incorrect usage.  Use the '?' or <TAB> key to list commands.]]></entry>
@@ -22,23 +25,30 @@
         <entry name="ips">{{ first_available_ip }}-{{ device.num }}</entry>
       </key>
       <!-- SNMP community name -->
-      <key name="{% if device.snmpv3|default(false)|bool %}{{ device.v3authusername }}{% else %}{{ device.community|default('cisco') }}{% endif %}">
-        <entry name="prompt">{HOST}#</entry>
+      <key name="{% if device.api|default(false)|bool %}{{ device.apiusername }}{% elif device.snmpv3|default(false)|bool %}{{ device.v3authusername }}{% else %}{{ device.community|default('cisco') }}{% endif %}">
 {% if device.snmpv2|default(false)|bool or device.snmpv3|default(false)|bool %}
         <entry name="walkFile">../recordings/snmp/{{ device.id }}.snmp</entry>
 {% endif %}
 {% if device.ssh|default(false)|bool %}
+        <entry name="prompt">{HOST}#</entry>
         <entry name="recordFile">../recordings/cli/{{ device.id }}.cli</entry>
 {% endif %}
 {% if device.netconf|default(false)|bool %}
         <entry name="netconfFile">../recordings/nconf/{{ device.id }}.nconf</entry>
 {% endif %}
 {% if device.snmpv3|default(false)|bool %}
+        <entry name="snmpVersion">3</entry>
         <entry name="v3UserName">{{ device.v3authusername }}</entry>
         <entry name="v3AuthProtocol">{{ device.v3authprotocol }}</entry>
         <entry name="v3AuthPassword">{{ device.v3authpassword }}</entry>
         <entry name="v3PrivPassword">{{ device.v3privpassword }}</entry>
         <entry name="v3PrivProtocol">{{ device.v3privprotocol }}</entry>
+{% endif %}
+{% if device.api|default(false)|bool %}
+        <entry name="{% if device.apisecure|default(false)|bool %}httpsPort{% else %}httpPort{% endif %}">{% if device.apiport != '' %}{{ device.apiport }}{% elif device.apisecure|default(false)|bool %}443{% else %}80{%endif %}</entry>
+        <entry name="httpsUsername">{{ device.apiusername }}</entry>
+        <entry name="httpsPassword">{{ device.apipassword }}</entry>
+        <entry name="{% if device.apisecure|default(false)|bool %}httpsFile{% else %}httpFile{% endif %}">../recordings/api/{{ device.id }}.api</entry>
 {% endif %}
       </key>
     </key>

@@ -1,0 +1,16 @@
+---
+# tasks to verify API response
+- block:
+  - name: get the request from the recording file
+    ansible.builtin.shell: |
+      sed -n '/HTTPS_QUESTION/{:s n;/HTTPS_ANSWER/q;p;bs}' /opt/{{ automation_reponame }}/recordings/api/{{ devid }}.api
+    register: reg_api_request
+    become: "{{ true if ansible_user != 'root' else false }}"
+    check_mode: no
+  - name: verify API response from device at {{ ip }}
+    ansible.builtin.shell: |
+      curl -kv --noproxy '*' --request POST 'http{{ 's' if apis else '' }}://{{ ip }}{{ (':' + aport) if aport != '' else '' }}' --data '{{ reg_api_request.stdout }}'
+    register: reg_api_response
+    until: reg_api_response is succeeded
+    delegate_to: localhost
+  tags: [ 'never', 'devsim' ]

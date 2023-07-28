@@ -105,14 +105,38 @@
         failed_when: reg_highest_ip.stderr is search('does not exist')
         become: "{{ true if ansible_user != 'root' else false }}"
         check_mode: no
-      - include_tasks:
-          file: task_verify_api_response.yml
-          apply:
-            vars:
-              ip: "{{ reg_highest_ip.stdout }}"
-              devid: "{{ device.id }}"
-              apis: "{{ device.apisecure }}"
-              aport: "{{ device.apiport }}"
+      - block:
+        - include_tasks:
+            file: task_verify_api_response.yml
+            apply:
+              vars:
+                ip: "{{ reg_highest_ip.stdout }}"
+                devid: "{{ device.id }}"
+                apis: "{{ device.apisecure }}"
+                aport: "{{ device.apiport }}"
+        rescue:
+        - include_tasks:
+            file: task_stop_avm.yml
+            apply:
+              vars:
+                avm_id: "{{ first_available_id }}"
+        - include_tasks:
+            file: task_start_avm.yml
+            apply:
+              vars:
+                avm_id: "{{ first_available_id }}"
+                max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320 if device.num|int < 4000 else 576)]|max }}"
+          vars:
+            adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
+            new_heap: "{{ [adj_heap|int,2048]|min }}"
+        - include_tasks:
+            file: task_verify_api_response.yml
+            apply:
+              vars:
+                ip: "{{ reg_highest_ip.stdout }}"
+                devid: "{{ device.id }}"
+                apis: "{{ device.apisecure }}"
+                aport: "{{ device.apiport }}"
       when:
         - device.api|default(false)|bool
     when:

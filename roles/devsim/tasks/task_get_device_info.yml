@@ -5,7 +5,7 @@
     ansible.builtin.shell: |
       grep '^    <key name="' {{ avm_file }} | cut -d '"' -f2
       sed -n '/SNMP community/{n;p;}' {{ avm_file }}
-      grep -E '^      <entry name="ssh"|^        <entry name="ips"|^      <entry name="Username"|Password|netconfFile|walkFile|v3' {{ avm_file }}
+      grep -E '^      <entry name="ssh"|^        <entry name="ips"|^      <entry name="Username"|Password|netconfFile|walkFile|v3|http' {{ avm_file }}
     register: reg_devinfo
   - name: define read device info lists
     ansible.builtin.set_fact:
@@ -13,8 +13,8 @@
       read_device_list: "{{ read_device_list|default([]) + [reg_devinfo.stdout_lines[0]] }}"
       read_ip_list: "{{ read_ip_list|default([]) + [devip] }}"
       read_ssh_list: "{{ read_ssh_list|default([]) + [reg_devinfo.stdout_lines|select('search','ssh')|length == 1] }}"
-      read_username_list: "{{ read_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Username')|regex_replace('^.*Username\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','ssh')|length == 1 else ''] }}"
-      read_password_list: "{{ read_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Password')|regex_replace('^.*Password\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','ssh')|length == 1 else ''] }}"
+      read_username_list: "{{ read_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Username')|reject('search','http')|regex_replace('^.*Username\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','ssh')|length == 1 else ''] }}"
+      read_password_list: "{{ read_username_list|default([]) + [reg_devinfo.stdout_lines|select('search','Password')|reject('search','http')|regex_replace('^.*Password\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','ssh')|length == 1 else ''] }}"
       read_netconf_list: "{{ read_netconf_list|default([]) + [reg_devinfo.stdout_lines|select('search','netconfFile')|length == 1] }}"
       read_snmpv3_list: "{{ read_snmpv3_list|default([]) + [reg_devinfo.stdout_lines|select('search','v3UserName')|length == 1] }}"
       read_snmpv3username_list: "{{ read_snmpv3username_list|default([]) + [reg_devinfo.stdout_lines|select('search','v3UserName')|regex_replace('^.*v3UserName\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','v3UserName')|length == 1 else ''] }}"
@@ -24,6 +24,11 @@
       read_snmpv3privprotocol_list: "{{ read_snmpv3privprotocol_list|default([]) + [reg_devinfo.stdout_lines|select('search','v3PrivProtocol')|regex_replace('^.*v3PrivProtocol\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('search','v3PrivProtocol')|length == 1 else ''] }}"
       read_snmpv2_list: "{{ read_snmpv2_list|default([]) + [reg_devinfo.stdout_lines|select('search','walkFile')|length == 1 and reg_devinfo.stdout_lines|select('search','v3UserName')|length == 0] }}"
       read_snmpv2_community_list: "{{ read_snmpv2_community_list|default([]) + [reg_devinfo.stdout_lines|select('search','key name')|regex_replace('^.*=\"(.*)\">.*$','\\1') if reg_devinfo.stdout_lines|select('search','walkFile')|length == 1 and reg_devinfo.stdout_lines|select('search','v3UserName')|length == 0 else ''] }}"
+      read_api_list: "{{ read_api_list|default([]) + [reg_devinfo.stdout_lines|select('regex','http.*Port')|length == 1] }}"
+      read_apisecure_list: "{{ read_apisecure_list|default([]) + [reg_devinfo.stdout_lines|select('regex','httpsPort')|length == 1] }}"
+      read_apiport_list: "{{ read_apiport_list|default([]) + [reg_devinfo.stdout_lines|select('regex','http.*Port')|regex_replace('^.*http.*Port\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('regex','http.*Port')|length == 1 else ''] }}"
+      read_apiusername_list: "{{ read_apiusername_list|default([]) + [reg_devinfo.stdout_lines|select('regex','http.*Username')|regex_replace('^.*http.*Username\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('regex','http.*Username')|length == 1 else ''] }}"
+      read_apipassword_list: "{{ read_apipassword_list|default([]) + [reg_devinfo.stdout_lines|select('regex','http.*Password')|regex_replace('^.*http.*Password\">(.*)</e.*$','\\1') if reg_devinfo.stdout_lines|select('regex','http.*Password')|length == 1 else ''] }}"
     loop: "{{ range(0,numips|int)|list }}"
     loop_control:
       loop_var: num_item

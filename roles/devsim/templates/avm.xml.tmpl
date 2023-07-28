@@ -45,10 +45,10 @@
         <entry name="v3PrivProtocol">{{ device.v3privprotocol }}</entry>
 {% endif %}
 {% if device.api|default(false)|bool %}
-        <entry name="{% if device.apisecure|default(false)|bool %}httpsPort{% else %}httpPort{% endif %}">{% if device.apiport != '' %}{{ device.apiport }}{% elif device.apisecure|default(false)|bool %}443{% else %}80{%endif %}</entry>
-        <entry name="httpsUsername">{{ device.apiusername }}</entry>
-        <entry name="httpsPassword">{{ device.apipassword }}</entry>
-        <entry name="{% if device.apisecure|default(false)|bool %}httpsFile{% else %}httpFile{% endif %}">../recordings/api/{{ device.id }}.api</entry>
+        <entry name="http{% if device.apisecure|default(false)|bool %}s{% endif %}Port">{% if device.apiport != '' %}{{ device.apiport }}{% elif device.apisecure|default(false)|bool %}443{% else %}80{%endif %}</entry>
+        <entry name="http{% if device.apisecure|default(false)|bool %}s{% endif %}Username">{{ device.apiusername }}</entry>
+        <entry name="http{% if device.apisecure|default(false)|bool %}s{% endif %}Password">{{ device.apipassword }}</entry>
+        <entry name="http{% if device.apisecure|default(false)|bool %}s{% endif %}File">../recordings/api/{{ device.id }}.api</entry>
 {% endif %}
       </key>
     </key>

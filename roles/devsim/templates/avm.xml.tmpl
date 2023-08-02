@@ -26,9 +26,6 @@
       </key>
       <!-- SNMP community name -->
       <key name="{% if device.api|default(false)|bool %}{{ device.apiusername }}{% elif device.snmpv3|default(false)|bool %}{{ device.v3authusername }}{% else %}{{ device.community|default('cisco') }}{% endif %}">
-{% if device.snmpv2|default(false)|bool or device.snmpv3|default(false)|bool %}
-        <entry name="walkFile">../recordings/snmp/{{ device.id }}.snmp</entry>
-{% endif %}
 {% if device.ssh|default(false)|bool %}
         <entry name="prompt">{HOST}#</entry>
         <entry name="recordFile">../recordings/cli/{{ device.id }}.cli</entry>
@@ -36,8 +33,11 @@
 {% if device.netconf|default(false)|bool %}
         <entry name="netconfFile">../recordings/nconf/{{ device.id }}.nconf</entry>
 {% endif %}
+{% if device.snmpv2|default(false)|bool or device.snmpv3|default(false)|bool %}
+        <entry name="walkFile">../recordings/snmp/{{ device.id }}.snmp</entry>
+        <entry name="snmpVersion">{{ '3' if device.snmpv3|default(false)|bool else '2' }}</entry>
+{% endif %}
 {% if device.snmpv3|default(false)|bool %}
-        <entry name="snmpVersion">3</entry>
         <entry name="v3UserName">{{ device.v3authusername }}</entry>
         <entry name="v3AuthProtocol">{{ device.v3authprotocol }}</entry>
         <entry name="v3AuthPassword">{{ device.v3authpassword }}</entry>

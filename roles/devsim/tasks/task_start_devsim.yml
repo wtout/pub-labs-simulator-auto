@@ -25,6 +25,9 @@
         apply:
           vars:
             device: "{{ device_item }}"
+      when:
+          - device_item.api
+          - device_item.snmpv2 or device_item.snmpv3
       loop: "{{ device_list|default([]) }}"
       loop_control:
         loop_var: device_item
@@ -41,4 +44,10 @@
       loop_control:
         loop_var: device_item
     when: deploy_devsim|default(false)|bool
+  - name: display list of flawed SNMP recordings
+    ansible.builtin.debug:
+      msg:
+        - "{{ snmp_flawed_recording_list|default([])|length|string + ' flawed files have been identified:' }}"
+        - "{{ snmp_flawed_recording_list|default([]) }}"
+    when: snmp_flawed_recording_list|default([]) != []
   tags: [ 'never', 'devsim' ]

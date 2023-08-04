@@ -32,7 +32,7 @@
           version: v3
           level: authPriv
           integrity: "{{ authpr|lower }}"
-          privacy: "{{ privpr|lower|regex_replace('[0-9]*','') }}"
+          privacy: "{{ encryption }}"
           username: "{{ authusr }}"
           authkey: "{{ authpas }}"
           privkey: "{{ privpas }}"
@@ -49,12 +49,14 @@
         ansible.builtin.set_fact:
           snmp_flawed_recording_list: "{{ snmp_flawed_recording_list|default([]) + [devid + ': ' + reg_snmpv3_response|string] }}"
       when:
-        - (ansible_facts.distribution == 'AlmaLinux' and privpr|lower|regex_replace('[0-9]*','') == 'aes') or (ansible_facts.distribution == 'CentOS' and privpr|lower|regex_replace('[0-9]*','') == 'des')
+        - (ansible_facts.distribution == 'AlmaLinux' and encryption == 'aes') or (ansible_facts.distribution == 'CentOS' and encryption == 'des')
     - ansible.builtin.debug:
-        msg: "{{ devid + ': ' + 'Unable to send a SNMPv3 walk request with the current OS and Encryption/Privacy combination: ' + ansible_facts.distribution + ' + ' + privpr|lower|regex_replace('[0-9]*','')|upper }}"
+        msg: "{{ devid + ': ' + 'Unable to send a SNMPv3 walk request with the current OS and Encryption/Privacy combination: ' + ansible_facts.distribution + ' + ' + encryption|upper }}"
       when:
-        - (ansible_facts.distribution == 'AlmaLinux' and privpr|lower|regex_replace('[0-9]*','') != 'aes') or (ansible_facts.distribution == 'CentOS' and privpr|lower|regex_replace('[0-9]*','') != 'des')
+        - (ansible_facts.distribution == 'AlmaLinux' and encryption != 'aes') or (ansible_facts.distribution == 'CentOS' and encryption != 'des')
     when:
       - snmpv3|default(false)
+    vars:
+      - encryption: "{{ privpr|lower|regex_replace('[0-9]*','') }}"
   delegate_to: localhost
   tags: [ 'never', 'devsim' ]

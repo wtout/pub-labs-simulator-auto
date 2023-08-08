@@ -8,9 +8,16 @@
     become: "{{ true if ansible_user != 'root' else false }}"
     check_mode: no
   - name: verify API response from device at {{ ip }}
-    ansible.builtin.shell: |
-      curl -kv --noproxy '*' --request POST 'http{{ 's' if apis else '' }}://{{ ip }}{{ (':' + aport) if aport != '' else '' }}' --data '{{ reg_api_request.stdout }}'
+    ansible.builtin.uri:
+      url: "http{{ 's' if apis else '' }}://{{ ip }}{{ (':' + aport) if aport != '' else '' }}"
+      method: POST
+      body_format: raw
+      body: "{{ reg_api_request.stdout }}"
+      validate_certs: false
     register: reg_api_response
     until: reg_api_response is succeeded
     delegate_to: localhost
+    environment:
+      http_proxy: ''
+      https_proxy: ''
   tags: [ 'never', 'devsim' ]

@@ -2,16 +2,13 @@
 # tasks file to get the list of AVM files IDs
 - block:
   - name: find all AVM files
-    ansible.builtin.find:
-      paths: "/opt/{{ automation_reponame }}/simulator/registry"
-      patterns: 'avm*.xml'
+    ansible.builtin.shell: |
+      ls avm*.xml|sed 's/^avm\(.*\)\.xml$/\1/g'
     register: reg_avm_files
-    no_log: true
+    args:
+      chdir: "/opt/{{ automation_reponame }}/simulator/registry"
+    check_mode: no
   - name: define file_avmid_list
     ansible.builtin.set_fact:
-      file_avmid_list: "{{ file_avmid_list|default([]) | union([file_item.path|regex_replace('^.*avm(.*).xml$','\\1')]) }}"
-    loop: "{{ reg_avm_files.files }}"
-    loop_control:
-      loop_var: file_item
-      label: "{{ file_item.path }}"
+      file_avmid_list: "{{ reg_avm_files.stdout_lines }}"
   tags: [ 'never', 'devsim' ]

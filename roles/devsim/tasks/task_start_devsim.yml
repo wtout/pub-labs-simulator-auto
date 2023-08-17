@@ -26,8 +26,7 @@
           vars:
             device: "{{ device_item }}"
       when:
-          - device_item.api
-          - device_item.snmpv2 or device_item.snmpv3
+        - (device_item.api and (device_item.snmpv2 or device_item.snmpv3)) or (device_item.ssh and (device_item.snmpv2 or device_item.snmpv3)) or (device_item.api and device_item.ssh) or (device_item.api and device_item.ssh and (device_item.snmpv2 or device_item.snmpv3))
       loop: "{{ device_list|default([]) }}"
       loop_control:
         loop_var: device_item

@@ -98,49 +98,55 @@
       when:
         - device.ssh|default(false)|bool
     - block:
-      - include_tasks:
-          file: task_verify_snmp_response.yml
-          apply:
-            vars:
-              devid: "{{ device.id }}"
-              ip: "{{ reg_highest_ip.stdout }}"
-              snmpv2: "{{ device.snmpv2 }}"
-              snmpv3: "{{ device.snmpv3 }}"
-              comstr: "{{ device.community }}"
-              authpr: "{{ device.v3authprotocol }}"
-              privpr: "{{ device.v3privprotocol }}"
-              authusr: "{{ device.v3authusername }}"
-              authpas: "{{ device.v3authpassword }}"
-              privpas: "{{ device.v3privpassword }}"
-      rescue:
-      - include_tasks:
-          file: task_stop_avm.yml
-          apply:
-            vars:
-              avm_id: "{{ first_available_id }}"
-      - include_tasks:
-          file: task_start_avm.yml
-          apply:
-            vars:
-              avm_id: "{{ first_available_id }}"
-              max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320 if device.num|int < 4000 else 576)]|max }}"
-        vars:
-          adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
-          new_heap: "{{ [adj_heap|int,2048]|min }}"
-      - include_tasks:
-          file: task_verify_snmp_response.yml
-          apply:
-            vars:
-              devid: "{{ device.id }}"
-              ip: "{{ reg_highest_ip.stdout }}"
-              snmpv2: "{{ device.snmpv2 }}"
-              snmpv3: "{{ device.snmpv3 }}"
-              comstr: "{{ device.community }}"
-              authpr: "{{ device.v3authprotocol }}"
-              privpr: "{{ device.v3privprotocol }}"
-              authusr: "{{ device.v3authusername }}"
-              authpas: "{{ device.v3authpassword }}"
-              privpas: "{{ device.v3privpassword }}"
+      - block:
+        - include_tasks:
+            file: task_verify_snmp_response.yml
+            apply:
+              vars:
+                devid: "{{ device.id }}"
+                ip: "{{ reg_highest_ip.stdout }}"
+                snmpv2: "{{ device.snmpv2 }}"
+                snmpv3: "{{ device.snmpv3 }}"
+                comstr: "{{ device.community }}"
+                authpr: "{{ device.v3authprotocol }}"
+                privpr: "{{ device.v3privprotocol }}"
+                authusr: "{{ device.v3authusername }}"
+                authpas: "{{ device.v3authpassword }}"
+                privpas: "{{ device.v3privpassword }}"
+        rescue:
+        - include_tasks:
+            file: task_stop_avm.yml
+            apply:
+              vars:
+                avm_id: "{{ first_available_id }}"
+        - include_tasks:
+            file: task_start_avm.yml
+            apply:
+              vars:
+                avm_id: "{{ first_available_id }}"
+                max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320 if device.num|int < 4000 else 576)]|max }}"
+          vars:
+            adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
+            new_heap: "{{ [adj_heap|int,2048]|min }}"
+        - include_tasks:
+            file: task_verify_snmp_response.yml
+            apply:
+              vars:
+                devid: "{{ device.id }}"
+                ip: "{{ reg_highest_ip.stdout }}"
+                snmpv2: "{{ device.snmpv2 }}"
+                snmpv3: "{{ device.snmpv3 }}"
+                comstr: "{{ device.community }}"
+                authpr: "{{ device.v3authprotocol }}"
+                privpr: "{{ device.v3privprotocol }}"
+                authusr: "{{ device.v3authusername }}"
+                authpas: "{{ device.v3authpassword }}"
+                privpas: "{{ device.v3privpassword }}"
+      - name: define snmp_flawed_recording_list
+        ansible.builtin.set_fact:
+          snmp_flawed_recording_list: "{{ snmp_flawed_recording_list|default([]) + [device.id + ': ' + ((reg_snmpv3_response.module_stderr if reg_snmpv3_response.module_stderr is defined and reg_snmpv3_response.module_stderr != '' else reg_snmpv3_response.msg) if device.snmpv3|default(false) else (reg_snmpv2_response.module_stderr if reg_snmpv2_response.module_stderr is defined and reg_snmpv2_response.module_stderr != '' else reg_snmpv2_response.msg))|string] }}"
+        when:
+          - (device.snmpv2|default(false)|bool and reg_snmpv2_response.msg is defined and reg_snmpv2_response.msg is not search('No SNMP response received before timeout')) or (device.snmpv3|default(false)|bool and reg_snmpv3_response.msg is defined and reg_snmpv3_response.msg is not search('No SNMP response received before timeout'))
       when:
         - device.snmpv2|default(false)|bool or device.snmpv3|default(false)|bool
     - block:

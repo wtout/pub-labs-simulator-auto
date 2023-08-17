@@ -8,17 +8,22 @@
         version: v2c
         community: "{{ comstr }}"
       register: reg_snmpv2_response
+      failed_when:
+        - reg_snmpv2_response is failed
+        - reg_snmpv2_response.msg is search('No SNMP response received before timeout')
       no_log: yes
     - debug:
         msg:
           - "{{ devid }}: {{ reg_snmpv2_response.ansible_facts.ansible_sysdescr }}"
+      when:
+        - reg_snmpv2_response.ansible_facts is defined
     rescue:
     - debug:
         msg:
           - "{{ devid }}: {{ reg_snmpv2_response }}"
-    - name: define snmp_flawed_recording_list
-      ansible.builtin.set_fact:
-        snmp_flawed_recording_list: "{{ snmp_flawed_recording_list|default([]) + [devid + ': ' + reg_snmpv2_response|string] }}"
+    always:
+    - ansible.builtin.assert:
+        that: reg_snmpv2_response is succeeded
     when: snmpv2|default(false)
   - block:
     - name: get the Linux distribution
@@ -37,17 +42,22 @@
           authkey: "{{ authpas }}"
           privkey: "{{ privpas }}"
         register: reg_snmpv3_response
+        failed_when:
+          - reg_snmpv3_response is failed
+          - reg_snmpv3_response.msg is search('No SNMP response received before timeout')
         no_log: yes
       - debug:
           msg:
             - "{{ devid }}: {{ reg_snmpv3_response.ansible_facts.ansible_sysdescr }}"
+        when:
+          - reg_snmpv3_response.ansible_facts is defined
       rescue:
       - debug:
           msg:
             - "{{ devid }}: {{ reg_snmpv3_response }}"
-      - name: define snmp_flawed_recording_list
-        ansible.builtin.set_fact:
-          snmp_flawed_recording_list: "{{ snmp_flawed_recording_list|default([]) + [devid + ': ' + reg_snmpv3_response|string] }}"
+      always:
+      - ansible.builtin.assert:
+          that: reg_snmpv3_response is succeeded
       when:
         - (ansible_facts.distribution == 'AlmaLinux' and encryption == 'aes') or (ansible_facts.distribution == 'CentOS' and encryption == 'des')
     - ansible.builtin.debug:

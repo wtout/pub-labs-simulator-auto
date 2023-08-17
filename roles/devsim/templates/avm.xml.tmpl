@@ -25,7 +25,7 @@
         <entry name="ips">{{ first_available_ip }}-{{ device.num }}</entry>
       </key>
       <!-- SNMP community name -->
-      <key name="{% if device.api|default(false)|bool %}{{ device.apiusername }}{% elif device.snmpv3|default(false)|bool %}{{ device.v3authusername }}{% else %}{{ device.community|default('cisco') }}{% endif %}">
+      <key name="{% if device.api|default(false)|bool %}{{ device.apiusername }}{% elif device.snmpv3|default(false)|bool %}{{ device.v3authusername }}{% elif device.ssh|default(false)|bool %}{{ device.username }}{% else %}{{ device.community|default('cisco') }}{% endif %}">
 {% if device.ssh|default(false)|bool %}
         <entry name="prompt">{HOST}#</entry>
         <entry name="recordFile">../recordings/cli/{{ device.id }}.cli</entry>

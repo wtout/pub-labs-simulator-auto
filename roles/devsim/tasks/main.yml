@@ -3,6 +3,17 @@
 - block:
   - name: check original credentials
     block:
+      - name: check if VM exists
+        community.vmware.vmware_guest_info:
+          hostname: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['address'] }}"
+          username: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['username'] }}"
+          password: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['password'] }}"
+          datacenter: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datacenter'] }}"
+          name: "{{ vm.name }}"
+          schema: vsphere
+          validate_certs: no
+        register: reg_guest_info
+        delegate_to: localhost
       - name: check VM credentials
         ansible.builtin.wait_for_connection:
           timeout: 3
@@ -13,7 +24,7 @@
         ansible.builtin.set_fact:
           creds_status: 'The VM IP address is invalid'
         when:
-          - dvsm_vm_creds.msg is search('Failed to connect to the host via ssh')
+          - reg_guest_info.msg is search('Unable to gather information for non-existing VM') or dvsm_vm_creds.msg is search('Failed to connect to the host via ssh|Data could not be sent to remote host|Unable to gather information for non-existing VM')
       - block:
         - name: check service account credentials
           block:
@@ -32,6 +43,7 @@
               ansible.builtin.set_fact:
                 creds_status: 'The VM credentials are invalid'
         when:
+          - creds_status|default('') == ''
           - dvsm_vm_creds.msg is search('Invalid/incorrect')
   - ansible.builtin.assert:
       that:

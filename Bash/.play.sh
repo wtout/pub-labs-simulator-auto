@@ -446,14 +446,15 @@ function view_vault() {
 }
 
 function get_repo_creds() {
-	[[ -f ${1} ]] && grep 'REPOPASS=' "${1}" 1>/dev/null && rm -f "${1}"
 	local REPOUSER
 	local REPOPASS
-	if [[ ! -f ${1} ]]
+	if [[ -f ${1} ]]
 	then
-		echo
+		grep 'REPOPASS=' "${1}" 1>/dev/null && rm -f "${1}"
+	else
+		echo -e "\n\nYour ${BOLD}$(git config --get remote.origin.url|cut -d '/' -f3|cut -d '@' -f2)${NORMAL} Repository credentials are needed"
 		read -rp "Enter your Repository username [ENTER]: " REPOUSER
-		read -rsp "Enter your Repository password [ENTER]: " REPOPASS
+		read -rsp "Enter your Repository token [ENTER]: " REPOPASS
 		echo
 		if [[ ${REPOUSER} != "" && ${REPOPASS} != "" ]]
 		then
@@ -733,7 +734,7 @@ then
     return 1
 else
 	[[ $- =~ x ]] && debug=1 && [[ "${SECON}" == "true" ]] && set +x
-	rm -f "${SVCVAULT}"; touch "${SVCVAULT}"
+	rm -f "${SVCVAULT}"; umask 0022; touch "${SVCVAULT}"
 	for c in ${USER_ACCTS}
 	do
 		get_creds primary ${c} user 1>/dev/null && echo -e "P${c^^}_USER: '$(get_creds primary ${c} user)'" >> "${SVCVAULT}"

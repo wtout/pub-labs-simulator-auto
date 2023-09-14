@@ -6,5 +6,4 @@
   - include_tasks: task_stop_services.yml
   - include_tasks: task_add_static_route.yml
   - include_tasks: task_enable_ssh_support.yml
-  - include_tasks: task_update_registry_files.yml
   tags: vm_configuration

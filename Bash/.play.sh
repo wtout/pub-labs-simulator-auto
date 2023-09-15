@@ -176,7 +176,7 @@ function stop_container() {
 	if [[ $(check_container; echo "${?}") -eq 0 ]]
 	then
 		echo "Stopping container ${CONTAINERNAME}"
-		$(docker_cmd) stop ${CONTAINERNAME}
+		$(docker_cmd) stop ${CONTAINERNAME} &>/dev/null
 	fi
 }
 

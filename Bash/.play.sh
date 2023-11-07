@@ -52,7 +52,7 @@ function check_deffile() {
 
 function get_os() {
 	local MYRELEASE
-	MYRELEASE=$(grep _MANTISBT_PROJECT= /etc/os-release|cut -d '"' -f2)
+	MYRELEASE=$(grep ^NAME= /etc/os-release|cut -d '"' -f2|awk '{print $1}')
 	if [[ "${MYRELEASE}" != "" ]]	
 	then
 		echo ${MYRELEASE}
@@ -73,7 +73,7 @@ function check_docker_login() {
 	MYDOMAIN=$(echo ${CONTAINERREPO}|cut -d '/' -f1)
 	MYRELEASE=$(get_os)
 	case ${MYRELEASE} in
-		CentOS-7)
+		CentOS*)
 			MYJSONFILE=${AUTHFILE}
 			;;
 		AlmaLinux*)
@@ -110,7 +110,7 @@ function docker_cmd() {
 	local MYRELEASE
 	MYRELEASE=$(get_os)
 	case ${MYRELEASE} in
-		CentOS-7)
+		CentOS*)
 			if [[ -f /etc/systemd/system/docker@.service ]]
 			then
 				echo "docker -H unix:///var/run/docker-$(whoami).sock"
@@ -181,7 +181,7 @@ function stop_container() {
 }
 
 function check_repeat_job() {
-	ps aux | grep -w "${ENAME}" | grep -vwE "${PID}|grep"
+	ps -ef | grep -w "${ENAME}" | grep "Bash/play_" | grep -vwE "${PID}|grep" | grep -vw 'cd'
 	return ${?}
 }
 
@@ -301,7 +301,7 @@ function get_proxy() {
 			echo "${MYPROXY}"
 			return 0
 		else
-			echo -e "Unable to find proxy configuration in /etc/environment /etc/profile ~/.bashrc ~/.bash_profile. Aborting!\n"
+			echo -e "Unable to find proxy configuration in /etc/environment /etc/profile /etc/profile.d/ ~/.bashrc ~/.bash_profile. Aborting!\n"
 			return 1
 		fi
 	else
@@ -312,10 +312,10 @@ function get_proxy() {
 			return 0
 		else
 			[[ $- =~ x ]] && debug=1 && [[ "${SECON}" == "true" ]] && set +x
-			get_creds primary svc user 1>/dev/null && read -r PPUSER <<< "$(get_creds primary svc user)"
-			get_creds primary svc pass 1>/dev/null && read -r PPPASS <<< "$(get_creds primary svc pass)"
-			get_creds secondary svc user 1>/dev/null && read -r SPUSER <<< "$(get_creds secondary svc user)"
-			get_creds secondary svc pass 1>/dev/null && read -r SPPASS <<< "$(get_creds secondary svc pass)"
+			select_creds primary vcenter_service user "${PCREDS_LIST[@]}" 1>/dev/null && read -r PPUSER <<< "$(select_creds primary vcenter_service user "${PCREDS_LIST[@]}")"
+			select_creds primary vcenter_service pass "${PCREDS_LIST[@]}" 1>/dev/null && read -r PPPASS <<< "$(select_creds primary vcenter_service pass "${PCREDS_LIST[@]}" "${PCREDS_LIST[@]}")"
+			select_creds secondary vcenter_service user "${SCREDS_LIST[@]}" 1>/dev/null && read -r SPUSER <<< "$(select_creds secondary vcenter_service user "${SCREDS_LIST[@]}")"
+			select_creds secondary vcenter_service pass "${SCREDS_LIST[@]}" 1>/dev/null && read -r SPPASS <<< "$(select_creds secondary vcenter_service pass "${SCREDS_LIST[@]}" "${PCREDS_LIST[@]}")"
 			MYPROXY=$(echo "${MYPROXY}" | sed -e "s|//.*@|//|g" -e "s|//|//${PPUSER}:${PPPASS}@|g")
 			curl --proxy "${MYPROXY}" "${PUBLIC_ADDRESS}" &>/dev/null
 			if [[ ${?} -eq 0 ]]
@@ -354,7 +354,7 @@ function get_creds_prefix() {
     local DATACENTER
     local CREDS_PREFIX
 	[[ -f "${SYS_DEF}" ]] && FILETOCHECK="${SYS_DEF}" || FILETOCHECK="${SYS_ALL}"
-	DATACENTER=$(cat "${FILETOCHECK}" | sed "/^$/d" | grep -A32 -P "^datacenter:$" | sed -n "/${1}:/,+2p" | sed -n "/name:/,1p" | awk -F ': ' '{print $NF}')
+	DATACENTER=$(cat "${FILETOCHECK}" | sed "/^$/d" | grep -A32 -P "^datacenter:$" | sed -n "/${1}:/,+2p" | sed -n "/name:/,1p" | awk -F ': ' '{print $NF}' | sed "s/'//g")
 	if [[ "${?}" == "0" ]] && [[ "${DATACENTER}" != "" ]] && [[ "${DATACENTER}" != "''" ]]
 	then
 		case ${DATACENTER} in
@@ -381,7 +381,26 @@ function get_creds_prefix() {
 function get_creds() {
 	if [[ $(get_creds_prefix ${1}) ]]
 	then
-		view_vault vars/passwords.yml Bash/get_common_vault_pass.sh  | grep ^$(get_creds_prefix ${1})${2^^}_${3^^} | cut -d "'" -f2
+		view_vault vars/passwords.yml Bash/get_common_vault_pass.sh | grep ^$(get_creds_prefix ${1}) | sed "s/'//g"
+		return 0
+	else
+		return 1
+	fi
+}
+
+function select_creds() {
+	local SITE
+	local ACCT
+	local CRED
+	local CREDS_LIST
+	SITE=${1}
+	ACCT=${2}
+	CRED=${3}
+	shift; shift; shift
+	CREDS_LIST=("${@}")
+	if [[ "$(echo ${CREDS_LIST})" != '' ]]
+	then
+		echo "${CREDS_LIST[@]}" | grep ^$(get_creds_prefix ${SITE})${ACCT^^}_${CRED^^} | cut -d " " -f2
 		return 0
 	else
 		return 1
@@ -693,7 +712,6 @@ REPOVAULT="vars/.repovault.yml"
 CONTAINERWD="/home/ansible/$(basename ${PWD})"
 CONTAINERREPO="containers.cisco.com/watout/ansible"
 USER_ACCTS="svc r labsadmin appadmin"
-SECON=true
 
 # Main
 PID="${$}"
@@ -717,18 +735,27 @@ NEW_ARGS=$(clean_arguments '--envname' "${ENAME}" "${@}")
 NEW_ARGS=$(clean_arguments '--avmlist' "${ALIST}" "${NEW_ARGS}")
 check_deffile
 set -- && set -- "${@}" "${NEW_ARGS}"
-[[ $- =~ x ]] && debug=1 && [[ "${SECON}" == "true" ]] && set +x
-PROXY_ADDRESS=$(get_proxy) || PA=${?}
-[[ ${PA} -eq 1 ]] && echo -e "\n${PROXY_ADDRESS}\n" && exit ${PA}
-[[ ${debug} == 1 ]] && set -x
 git_config
-add_write_permission ${PWD}/vars
+SECON=$([[ "$(git config user.email|cut -d '@' -f1)" == "watout" ]] && echo "false" || echo "true")
 check_container && stop_container
 image_prune
 start_container
-get_repo_creds "${REPOVAULT}" Bash/get_repo_vault_pass.sh
-check_updates "${REPOVAULT}" Bash/get_repo_vault_pass.sh
-if [[ ${?} -eq 3 ]]
+[[ $- =~ x ]] && debug=1 && [[ "${SECON}" == "true" ]] && set +x
+PCREDS_LIST=$(get_creds primary)
+SCREDS_LIST=$(get_creds secondary)
+PROXY_ADDRESS=$(get_proxy) || PA=${?}
+[[ ${PA} -eq 1 ]] && echo -e "\n${PROXY_ADDRESS}\n" && exit ${PA}
+[[ ${debug} == 1 ]] && set -x
+add_write_permission ${PWD}/vars
+if [[ -z ${MYINVOKER+x} ]]
+then
+	get_repo_creds "${REPOVAULT}" Bash/get_repo_vault_pass.sh
+	check_updates "${REPOVAULT}" Bash/get_repo_vault_pass.sh
+	CHECK_UPDATE_STATUS=${?}
+else
+	CHECK_UPDATE_STATUS=0
+fi
+if [[ ${CHECK_UPDATE_STATUS} -eq 3 ]]
 then
     stop_container
     return 1
@@ -737,10 +764,10 @@ else
 	rm -f "${SVCVAULT}"; umask 0022; touch "${SVCVAULT}"
 	for c in ${USER_ACCTS}
 	do
-		get_creds primary ${c} user 1>/dev/null && echo -e "P${c^^}_USER: '$(get_creds primary ${c} user)'" >> "${SVCVAULT}"
-		get_creds primary ${c} pass 1>/dev/null && echo -e "P${c^^}_PASS: '$(get_creds primary ${c} pass)'" >> "${SVCVAULT}"
-		get_creds secondary ${c} user 1>/dev/null && echo -e "S${c^^}_USER: '$(get_creds secondary ${c} user)'" >> "${SVCVAULT}"
-		get_creds secondary ${c} pass 1>/dev/null && echo -e "S${c^^}_PASS: '$(get_creds secondary ${c} pass)'" >> "${SVCVAULT}"
+		select_creds primary ${c} user "${PCREDS_LIST[@]}" 1>/dev/null && echo -e "P${c^^}_USER: '$(select_creds primary ${c} user "${PCREDS_LIST[@]}")'" >> "${SVCVAULT}"
+		select_creds primary ${c} pass "${PCREDS_LIST[@]}" 1>/dev/null && echo -e "P${c^^}_PASS: '$(select_creds primary ${c} pass "${PCREDS_LIST[@]}")'" >> "${SVCVAULT}"
+		select_creds secondary ${c} user "${SCREDS_LIST[@]}" 1>/dev/null && echo -e "S${c^^}_USER: '$(select_creds secondary ${c} user "${SCREDS_LIST[@]}")'" >> "${SVCVAULT}"
+		select_creds secondary ${c} pass "${SCREDS_LIST[@]}" 1>/dev/null && echo -e "S${c^^}_PASS: '$(select_creds secondary ${c} pass "${SCREDS_LIST[@]}")'" >> "${SVCVAULT}"
 	done
 	[[ ${debug} == 1 ]] && set -x
 	add_write_permission "${SVCVAULT}"
@@ -760,6 +787,7 @@ else
 	run_playbook "${@}"
 	stop_container
 	disable_logging
+	sleep 10
 	start_container &>/dev/null
 	send_notification "${ORIG_ARGS}"
 	stop_container &>/dev/null

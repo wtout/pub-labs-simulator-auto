@@ -66,7 +66,7 @@ The system definition file consists of the following variables:
 
 To create the system inventory without deploying the system, issue the following command from the automation root directory (pae-labs-simulator-auto):
 
-    $> sh Bash/play_deploy.sh --envname <system-name> --tags none
+    $> bash Bash/play_deploy.sh --envname <system-name> --tags none
 
 
 ### ISO Image ###
@@ -115,17 +115,17 @@ To skip specific role(s), add "_--skip-tags 'role1,role2,etc...'_" as argument t
 
 **_Example1_**: to execute one or more roles, run the script as follows:
 
-    $> sh Bash/<script-name> --envname <system-name> --tags 'role1,role2,etc...'
+    $> bash Bash/<script-name> --envname <system-name> --tags 'role1,role2,etc...'
 
 **_Example2_**: to run all roles except one or more, run the script as follows:
 
-    $> sh Bash/<script-name> --envname <system-name> --skip-tags 'role1,role2,etc...'
+    $> bash Bash/<script-name> --envname <system-name> --skip-tags 'role1,role2,etc...'
 
 To limit the processing to specific host(s) or group(s) or a combination of both, add "_--limit 'group1,host1,etc...'_" as argument to the script.
 
 **_Example3_**: to execute role1 and role2 on the lnxvm group and drlnxvm01, run the script as follows:
 
-    $> sh Bash/<script-name> --envname <system-name> --tags 'role1,role2' --limit 'lnxvm,drlnxvm01'
+    $> bash Bash/<script-name> --envname <system-name> --tags 'role1,role2' --limit 'lnxvm,drlnxvm01'
 
 ***Note**: group(s) or host(s) names specified with --limit must match the names defined in the hosts.yml file*
 
@@ -134,7 +134,7 @@ To limit the processing to specific host(s) or group(s) or a combination of both
 
 From the automation root directory (pae-labs-simulator-auto), run one of the bash scripts under the Bash directory depending on what you want to do. 
 
-    $> sh Bash/<script name> --envname <system-name> --tags devsim [--avmlist id1,id2,etc...]
+    $> bash Bash/<script name> --envname <system-name> --tags devsim [--avmlist id1,id2,etc...]
 
 with the _``system-name``_ being the name of the system definition file from "System Definition" and the script name being one of the following options:
 
@@ -150,39 +150,39 @@ with the _``system-name``_ being the name of the system definition file from "Sy
 
 **_Example1_**: to check what AVM IDs are currently active (started), run the script as follows
 
-    $> sh Bash/play_check.sh --envname <system-name> --tags devsim
+    $> bash Bash/play_check.sh --envname <system-name> --tags devsim
 
 ***Note**: A complete list of active device simulation details is saved to the “active_simulated_devices.csv” file under the automation root directory*
 
 **_Example2_**: to deploy/create new AVM IDs, run the script as follows
 
-    $> sh Bash/play_deploy.sh --envname <system-name> --tags devsim -e @<device_list file name>
+    $> bash Bash/play_deploy.sh --envname <system-name> --tags devsim -e @<device_list file name>
 
 ***Note**: Use the devices.yml file as a template. The file name can be changed*
 
 **_Example3_**: to start/activate specific, already created, AVM IDs, run the script as follows
 
-    $> sh Bash/play_start.sh --envname <system-name> --tags devsim --avm_list id1,id2,id3,etc...
+    $> bash Bash/play_start.sh --envname <system-name> --tags devsim --avm_list id1,id2,id3,etc...
 
 **_Example4_**: to start/activate all already created AVM IDs, run the script as follows
 
-    $> sh Bash/play_start.sh --envname <system-name> --tags devsim
+    $> bash Bash/play_start.sh --envname <system-name> --tags devsim
 
 **_Example5_**: to stop/deactivate specific active AVM IDs, run the script as follows
 
-    $> sh Bash/play_stop.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
+    $> bash Bash/play_stop.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
 
 **_Example6_**: to stop/deactivate all active AVM IDs, run the script as follows
 
-    $> sh Bash/play_stop.sh --envname <system-name> --tags devsim
+    $> bash Bash/play_stop.sh --envname <system-name> --tags devsim
 
 **_Example7_**: to rollback/remove specific active AVM IDs, run the script as follows
 
-    $> sh Bash/play_rollback.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
+    $> bash Bash/play_rollback.sh --envname <system-name> --tags devsim --avmlist id1,id2,id3,etc...
 
 **_Example8_**: to rollback/remove all active AVM IDs, run the script as follows
 
-    $> sh Bash/play_rollback.sh --envname <system-name> --tags devsim
+    $> bash Bash/play_rollback.sh --envname <system-name> --tags devsim
 
 
 ### Who do I talk to? ###

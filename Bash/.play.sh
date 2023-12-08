@@ -62,6 +62,30 @@ function get_os() {
 	fi
 }
 
+function add_user_uid_gid() {
+	local MYID
+	MYID=$(whoami)
+	if [[ "$(id ${MYID} | grep 'domain users')" != '' ]]
+	then
+		grep ${MYID} /etc/subuid &>/dev/null || echo -e "${MYID}:$(expr $(tail -1 /etc/subuid|cut -d ':' -f2) + $(tail -1 /etc/subuid|cut -d ':' -f3)):$(tail -1 /etc/subuid|cut -d ':' -f3)" | sudo tee -a /etc/subuid 1>/dev/null
+		yes|sudo cp -p /etc/subuid /etc/subgid
+	fi
+}
+
+function add_user_docker_group() {
+	local MYID
+	MYID=$(whoami)
+	if [[ "$(get_os)" == "CentOS"* ]] && [[ "$(id ${MYID} | grep 'domain users')" != '' ]]
+	then
+		if [[ "$(groups | grep docker)" == "" ]]
+		then
+			sudo usermod -aG docker ${MYID}
+			echo -e "\n\n${BOLD}The ${MYID} user got added to the docker group. Please log out and log back in so that your group membership is re-evaluated${NORMAL}\n"
+			exit 1
+		fi
+	fi
+}
+
 function check_docker_login() {
 	local MYRELEASE
 	local MYDOMAIN
@@ -79,6 +103,9 @@ function check_docker_login() {
 		AlmaLinux*)
 			MYJSONFILE=${XDG_RUNTIME_DIR}/containers/auth.json
 			;;
+		Ubuntu*)
+			MYJSONFILE=${HOME}/.podman/auth.json
+			;;
 		*)
 			;;
 	esac
@@ -89,9 +116,20 @@ function check_docker_login() {
 			LOGGEDIN=false
 		fi
 	else
-		if [[ ! -f ${AUTHFILE} || "$(grep ${MYDOMAIN} ${AUTHFILE})" == "" ]] && [[ ! -f ${MYJSONFILE} || "$(grep ${MYDOMAIN} ${MYJSONFILE})" == "" ]]
+		if [[ -z ${REGISTRY_AUTH_FILE+x} ]]
 		then
-			LOGGEDIN=false
+			if [[ ! -f ${AUTHFILE} || "$(grep ${MYDOMAIN} ${AUTHFILE})" == "" ]] && [[ ! -f ${MYJSONFILE} || "$(grep ${MYDOMAIN} ${MYJSONFILE})" == "" ]]
+			then
+				LOGGEDIN=false
+			fi
+		else
+			if [[ ! -f ${REGISTRY_AUTH_FILE} ]]
+			then
+				unset REGISTRY_AUTH_FILE
+				LOGGEDIN=false
+			else
+				[[ $(podman login --get-login ${MYDOMAIN} &>/dev/null; echo "${?}") -ne 0 ]] && LOGGEDIN=false
+			fi
 		fi
 	fi
 	if [[ "${LOGGEDIN}" == "false" ]]
@@ -118,7 +156,7 @@ function docker_cmd() {
 				echo "docker"
 			fi
 			;;
-		AlmaLinux*)
+		AlmaLinux*|Ubuntu*)
 			echo "docker"
 			;;
 		*)
@@ -158,14 +196,13 @@ function start_container() {
 	if [[ $(check_container; echo "${?}") -ne 0 ]]
 	then
 		[[ ! -d ${HOME}/.ssh ]] && mkdir ${HOME}/.ssh
-		sleep 10
 		echo "Starting container ${CONTAINERNAME}"
 		[[ $- =~ x ]] && debug=1 && [[ "${SECON}" == "true" ]] && set +x
 		if [[ "${ANSIBLE_LOG_PATH}" == "" ]]
 		then
 			$(docker_cmd) run --rm -e MYPROXY=${PROXY_ADDRESS} -e MYHOME=${HOME} -e MYHOSTNAME=$(hostname) -e MYCONTAINERNAME=${CONTAINERNAME} -e MYIP=$(get_host_ip) --user ansible -w ${CONTAINERWD} -v /data:/data:z -v /tmp:/tmp:z -v ${PWD}:${CONTAINERWD}:z --name ${CONTAINERNAME} -it -d --entrypoint /bin/bash ${CONTAINERREPO}:${ANSIBLE_VERSION}
 		else
-			$(docker_cmd) run --rm -e ANSIBLE_LOG_PATH=${ANSIBLE_LOG_PATH} -e ANSIBLE_FORKS=${NUM_HOSTSINPLAY} -e MYPROXY=${PROXY_ADDRESS} -e MYHOME=${HOME} -e MYHOSTNAME=$(hostname) -e MYCONTAINERNAME=${CONTAINERNAME} -e MYIP=$(get_host_ip) --user ansible -w ${CONTAINERWD} -v /data:/data:z -v /tmp:/tmp:z -v ${HOME}/.ssh:/home/ansible/.ssh:z -v ${PWD}:${CONTAINERWD}:z --name ${CONTAINERNAME} -it -d --entrypoint /bin/bash ${CONTAINERREPO}:${ANSIBLE_VERSION}
+			$(docker_cmd) run --rm -e ANSIBLE_LOG_PATH=${ANSIBLE_LOG_PATH} -e ANSIBLE_FORKS=${NUM_HOSTSINPLAY} -e MYPROXY=${PROXY_ADDRESS} -e MYHOME=${HOME} -e MYHOSTNAME=$(hostname) -e MYCONTAINERNAME=${CONTAINERNAME} -e MYIP=$(get_host_ip) -e MYHOSTOS=$(get_os) --user ansible -w ${CONTAINERWD} -v /data:/data:z -v /tmp:/tmp:z -v ${HOME}/.ssh:/home/ansible/.ssh:z -v ${PWD}:${CONTAINERWD}:z --name ${CONTAINERNAME} -it -d --entrypoint /bin/bash ${CONTAINERREPO}:${ANSIBLE_VERSION}
 		fi
 		[[ ${debug} == 1 ]] && set -x
 		[[ $(check_container; echo "${?}") -ne 0 ]] && echo "Unable to start container ${CONTAINERNAME}" && exit 1
@@ -272,7 +309,7 @@ function git_config() {
 			NAME=$(git config user.name | awk '{print $1}' | tr '[:upper:]' '[:lower:]')
 			SURNAME=$(git config user.name | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')
 			read -rp "Enter your email address [ENTER]: " GIT_EMAIL_ADDRESS
-			if [[ "$(git config remote.origin.url | grep "\/\/.*@")" == "" ]] && [[ "${GIT_EMAIL_ADDRESS}" != "" ]] && [[ "$(echo "${GIT_EMAIL_ADDRESS}" | cut -d '@' -f1)" == *"$(echo ${NAME:0:2} | tr '[:upper:]' '[:lower:]')"* ]] && [[ "$(echo "${GIT_EMAIL_ADDRESS}" | cut -d '@' -f1)" == *"$(echo ${SURNAME:0:5} | tr '[:upper:]' '[:lower:]')"* ]]
+			if [[ "$(git config remote.origin.url | grep "\/\/.*@")" == "" ]] && [[ "${GIT_EMAIL_ADDRESS}" != "" ]] && ([[ "$(echo "${GIT_EMAIL_ADDRESS}" | cut -d '@' -f1)" == *"$(echo ${NAME:0:2} | tr '[:upper:]' '[:lower:]')"* ]] || [[ "$(echo "${GIT_EMAIL_ADDRESS}" | cut -d '@' -f1)" == *"$(echo ${NAME:0:1} | tr '[:upper:]' '[:lower:]')"* ]]) && [[ "$(echo "${GIT_EMAIL_ADDRESS}" | cut -d '@' -f1)" == *"$(echo ${SURNAME:0:5} | tr '[:upper:]' '[:lower:]')"* ]]
 			then
 				git config user.email "${GIT_EMAIL_ADDRESS}" && git config remote.origin.url "$(git config remote.origin.url | sed -e "s|//\(\w\)|//$(echo "${GIT_EMAIL_ADDRESS}" | cut -d '@' -f1)@\1|")" || EC=1
 			else
@@ -290,7 +327,7 @@ function get_proxy() {
 	local PUBLIC_ADDRESS
 	chmod +x Bash/get*
 	grep -r '^proxy.*:.*@*' /etc/environment /etc/profile /etc/profile.d/ ~/.bashrc ~/.bash_profile &>/dev/null && [[ $- =~ x ]] && debug=1 && [[ "${SECON}" == "true" ]] && set +x
-	MYPROXY=$(grep -r "^proxy.*=.*" /etc/environment /etc/profile /etc/profile.d/ ~/.bashrc ~/.bash_profile | cut -d '"' -f2 | uniq)
+	MYPROXY=$(grep -rh "^proxy.*=.*" /etc/environment /etc/profile /etc/profile.d/ ~/.bashrc ~/.bash_profile 2>/dev/null | cut -d '"' -f2 | uniq)
 	[[ "${MYPROXY}" != "" ]] && [[ "$(echo "${MYPROXY}" | grep http)" == "" ]] && MYPROXY=http://${MYPROXY}
 	PUBLIC_ADDRESS="https://time.google.com"
 	if [[ "${MYPROXY}" == "" ]]
@@ -313,9 +350,9 @@ function get_proxy() {
 		else
 			[[ $- =~ x ]] && debug=1 && [[ "${SECON}" == "true" ]] && set +x
 			select_creds primary vcenter_service user "${PCREDS_LIST[@]}" 1>/dev/null && read -r PPUSER <<< "$(select_creds primary vcenter_service user "${PCREDS_LIST[@]}")"
-			select_creds primary vcenter_service pass "${PCREDS_LIST[@]}" 1>/dev/null && read -r PPPASS <<< "$(select_creds primary vcenter_service pass "${PCREDS_LIST[@]}" "${PCREDS_LIST[@]}")"
+			select_creds primary vcenter_service pass "${PCREDS_LIST[@]}" 1>/dev/null && read -r PPPASS <<< "$(select_creds primary vcenter_service pass "${PCREDS_LIST[@]}")"
 			select_creds secondary vcenter_service user "${SCREDS_LIST[@]}" 1>/dev/null && read -r SPUSER <<< "$(select_creds secondary vcenter_service user "${SCREDS_LIST[@]}")"
-			select_creds secondary vcenter_service pass "${SCREDS_LIST[@]}" 1>/dev/null && read -r SPPASS <<< "$(select_creds secondary vcenter_service pass "${SCREDS_LIST[@]}" "${PCREDS_LIST[@]}")"
+			select_creds secondary vcenter_service pass "${SCREDS_LIST[@]}" 1>/dev/null && read -r SPPASS <<< "$(select_creds secondary vcenter_service pass "${SCREDS_LIST[@]}")"
 			MYPROXY=$(echo "${MYPROXY}" | sed -e "s|//.*@|//|g" -e "s|//|//${PPUSER}:${PPPASS}@|g")
 			curl --proxy "${MYPROXY}" "${PUBLIC_ADDRESS}" &>/dev/null
 			if [[ ${?} -eq 0 ]]
@@ -381,7 +418,7 @@ function get_creds_prefix() {
 function get_creds() {
 	if [[ $(get_creds_prefix ${1}) ]]
 	then
-		view_vault vars/passwords.yml Bash/get_common_vault_pass.sh | grep ^$(get_creds_prefix ${1}) | sed "s/'//g"
+		view_vault ${PASSVAULT} Bash/get_common_vault_pass.sh | grep ^$(get_creds_prefix ${1}) | sed "s/'//g"
 		return 0
 	else
 		return 1
@@ -668,11 +705,11 @@ function run_playbook() {
 		fi
 		if [[ -z ${MYINVOKER+x} ]]
 		then
-			$(docker_cmd) exec -it ${CONTAINERNAME} ansible-playbook playbooks/site.yml -i "${INVENTORY_PATH}" --extra-vars "${EVARGS}" ${ASK_PASS} -e @"${PASSVAULT}" -e @"${SVCVAULT}" --vault-password-file Bash/get_common_vault_pass.sh -e @"${ANSIBLE_VARS}" -e "{auto_dir: '${CONTAINERWD}'}" ${@} -v 2> "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr
+			$(docker_cmd) exec -it ${CONTAINERNAME} ansible-playbook playbooks/site.yml -i "${INVENTORY_PATH}" --extra-vars "${EVARGS}" ${ASK_PASS} -e @"${SVCVAULT}" --vault-password-file Bash/get_common_vault_pass.sh -e @"${ANSIBLE_VARS}" -e "{auto_dir: '${CONTAINERWD}'}" ${@} -v 2> "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr
 		else
-			$(docker_cmd) exec -it ${CONTAINERNAME} ansible-playbook playbooks/site.yml -i "${INVENTORY_PATH}" --extra-vars "${EVARGS}" ${ASK_PASS} -e @"${PASSVAULT}" -e @"${SVCVAULT}" --vault-password-file Bash/get_common_vault_pass.sh -e @"${ANSIBLE_VARS}" -e "{auto_dir: '${CONTAINERWD}'}" ${@} -v 2> "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr 1>/dev/null
+			$(docker_cmd) exec -it ${CONTAINERNAME} ansible-playbook playbooks/site.yml -i "${INVENTORY_PATH}" --extra-vars "${EVARGS}" ${ASK_PASS} -e @"${SVCVAULT}" --vault-password-file Bash/get_common_vault_pass.sh -e @"${ANSIBLE_VARS}" -e "{auto_dir: '${CONTAINERWD}'}" ${@} -v 2> "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr 1>/dev/null
 		fi
-		[[ $(grep "no vault secrets were found that could decrypt" "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr | grep  "${PASSVAULT}") != "" ]] && echo -e "\nUnable to decrypt ${BOLD}${PASSVAULT}${NORMAL}" && EC=1
+		[[ $(grep "no vault secrets were found that could decrypt" "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr | grep  "${SVCVAULT}") != "" ]] && echo -e "\nUnable to decrypt ${BOLD}${SVCVAULT}${NORMAL}" && EC=1
 		[[ $(grep "no vault secrets were found that could decrypt" "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr | grep "${CRVAULT}") != "" ]] && echo -e "\nUnable to decrypt ${BOLD}${CRVAULT}${NORMAL}" && rm -f "${CRVAULT}" && EC=1
 		[[ $(grep "no vault secrets were found that could decrypt" "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr) == "" ]] && [[ $(grep -i warning "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr) == '' ]] && cat "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr
 		rm -f "${ANSIBLE_LOG_LOCATION}"/"${PID}".stderr
@@ -695,7 +732,8 @@ function send_notification() {
 	if [[ "$(check_mode "${@}")" == " " ]]
 	then
 		# Send playbook status notification
-		$(docker_cmd) exec -it ${CONTAINERNAME} ansible-playbook playbooks/notify.yml --extra-vars "{SVCFILE: '${CONTAINERWD}/${SVCVAULT}', LFILE: '${CONTAINERWD}/${NEW_LOG_FILE}', NHOSTS: '${NUM_HOSTSINPLAY}'}" --tags notify -e @"${SVCVAULT}" --vault-password-file Bash/get_common_vault_pass.sh -e @"${ANSIBLE_VARS}" -v &>/dev/null
+		NOTIF_ARGS=$(echo "${@}" | tr ' ' '\n' | sed -e '/--tags\|-t\|--limit\|-l\|--envname/,+1d' | tr '\n' ' ')
+		$(docker_cmd) exec -it ${CONTAINERNAME} ansible-playbook playbooks/notify.yml --extra-vars "{SVCFILE: '${CONTAINERWD}/${SVCVAULT}', LFILE: '${CONTAINERWD}/${NEW_LOG_FILE}', NHOSTS: '${NUM_HOSTSINPLAY}'}" --tags notify -e @"${SVCVAULT}" --vault-password-file Bash/get_common_vault_pass.sh -e @"${ANSIBLE_VARS}" ${NOTIF_ARGS} -v &>/dev/null
 		SCRIPT_STATUS=${?}
 	fi
 }
@@ -711,10 +749,12 @@ PASSVAULT="vars/passwords.yml"
 REPOVAULT="vars/.repovault.yml"
 CONTAINERWD="/home/ansible/$(basename ${PWD})"
 CONTAINERREPO="containers.cisco.com/watout/ansible"
-USER_ACCTS="svc r labsadmin appadmin"
 
 # Main
 PID="${$}"
+add_user_uid_gid
+add_user_docker_group
+[[ "$(get_os)" == "AlmaLinux"* || "$(get_os)" == "Ubuntu"* ]] && [[ "$($(docker_cmd) images|grep -vi tag)" == "" ]] && podman system migrate
 create_dir "${ANSIBLE_LOG_LOCATION}"
 check_arguments "${@}"
 check_docker_login
@@ -762,13 +802,8 @@ then
 else
 	[[ $- =~ x ]] && debug=1 && [[ "${SECON}" == "true" ]] && set +x
 	rm -f "${SVCVAULT}"; umask 0022; touch "${SVCVAULT}"
-	for c in ${USER_ACCTS}
-	do
-		select_creds primary ${c} user "${PCREDS_LIST[@]}" 1>/dev/null && echo -e "P${c^^}_USER: '$(select_creds primary ${c} user "${PCREDS_LIST[@]}")'" >> "${SVCVAULT}"
-		select_creds primary ${c} pass "${PCREDS_LIST[@]}" 1>/dev/null && echo -e "P${c^^}_PASS: '$(select_creds primary ${c} pass "${PCREDS_LIST[@]}")'" >> "${SVCVAULT}"
-		select_creds secondary ${c} user "${SCREDS_LIST[@]}" 1>/dev/null && echo -e "S${c^^}_USER: '$(select_creds secondary ${c} user "${SCREDS_LIST[@]}")'" >> "${SVCVAULT}"
-		select_creds secondary ${c} pass "${SCREDS_LIST[@]}" 1>/dev/null && echo -e "S${c^^}_PASS: '$(select_creds secondary ${c} pass "${SCREDS_LIST[@]}")'" >> "${SVCVAULT}"
-	done
+	[[ "$(echo ${PCREDS_LIST})" != "" ]] && echo "${PCREDS_LIST[@]}" | sed "s/$(get_creds_prefix primary)/P/g; s/^\(.*: \)\(.*\)$/\1'\2'/g" >> "${SVCVAULT}"
+	[[ "$(echo ${SCREDS_LIST})" != "" ]] && echo "${SCREDS_LIST[@]}" | sed "s/$(get_creds_prefix secondary)/S/g; s/^\(.*: \)\(.*\)$/\1'\2'/g" >> "${SVCVAULT}"
 	[[ ${debug} == 1 ]] && set -x
 	add_write_permission "${SVCVAULT}"
 	encrypt_vault "${SVCVAULT}" Bash/get_common_vault_pass.sh
@@ -776,7 +811,7 @@ else
 	sudo chmod 644 "${SVCVAULT}"
 	get_inventory "${@}"
 	get_hosts "${@}"
-	NUM_HOSTSINPLAY=$(echo $(get_hostsinplay "${HL}") | wc -w)
+	NUM_HOSTSINPLAY=$([[ "$(get_hostsinplay "${HL}" | wc -w)" != "0" ]] && get_hostsinplay "${HL}" | wc -w || echo "1")
 	create_symlink
 	stop_container
 	add_write_permission "${PWD}/roles"

@@ -18,4 +18,3 @@
     vars:
       host_network: "{{ hostvars[inventory_hostname]['build']['secondary' if 'dr' in group_names else 'primary']['networks'][inventory_hostname[-2:]|int -1] }}"
   become: "{{ true if ansible_user != 'root' else false }}"
-  tags: vm_configuration

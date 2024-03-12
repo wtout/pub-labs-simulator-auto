@@ -55,4 +55,3 @@
             ansible_ssh_pass: "{{ credentials.password }}"
             ansible_become_pass: "{{ credentials.password }}"
           no_log: true
-  tags: vm_creation

@@ -56,4 +56,3 @@
       - deploy_iso is succeeded
       - vmguest_info is failed
   delegate_to: localhost
-  tags: vm_creation

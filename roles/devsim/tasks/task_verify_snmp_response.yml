@@ -69,4 +69,3 @@
     vars:
       - encryption: "{{ privpr|lower|regex_replace('[0-9]*','') }}"
   delegate_to: localhost
-  tags: [ 'never', 'devsim' ]

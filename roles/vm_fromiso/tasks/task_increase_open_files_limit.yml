@@ -5,4 +5,3 @@
     path: /etc/security/limits.conf
     line: 'root            hard    nofile          8192'
   notify: reboot vm
-  tags: vm_creation

@@ -6,4 +6,3 @@
       name: '*'
       state: latest
   become: "{{ true if ansible_user != 'root' else false }}"
-  tags: vm_creation

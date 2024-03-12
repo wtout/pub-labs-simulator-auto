@@ -6,4 +6,3 @@
     ip addr add 192.0.0.1/24 dev dummy{{ int_id }}
     ip link set up dummy{{ int_id }}
   become: "{{ true if ansible_user != 'root' else false }}"
-  tags: [ 'never', 'devsim' ]

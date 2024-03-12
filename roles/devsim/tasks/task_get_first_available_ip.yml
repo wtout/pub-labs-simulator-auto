@@ -25,4 +25,3 @@
       fail_msg: 'The network range required for this device simulation exceeds the network range configured for this Device Simulator instance'
   vars:
     host_network: "{{ hostvars[inventory_hostname]['build']['secondary' if 'dr' in group_names else 'primary']['networks'][inventory_hostname[-2:]|int -1] }}"
-  tags: [ 'never', 'devsim' ]

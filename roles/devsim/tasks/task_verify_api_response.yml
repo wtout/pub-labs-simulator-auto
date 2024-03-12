@@ -20,4 +20,3 @@
     environment:
       http_proxy: ''
       https_proxy: ''
-  tags: [ 'never', 'devsim' ]

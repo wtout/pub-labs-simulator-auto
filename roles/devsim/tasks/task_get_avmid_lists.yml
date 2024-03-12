@@ -17,4 +17,3 @@
       when: AVMLIST|default('') != ''
     when:
       - file_avmid_list != []
-  tags: [ 'never', 'devsim' ]

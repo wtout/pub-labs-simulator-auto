@@ -13,4 +13,3 @@
       - (reg_ssh.rc != 0 and reg_ssh.rc != 6 and reg_ssh.rc != 124 and reg_ssh.rc != 255) or reg_ssh.stderr_lines|select('search', 'Connection (timed out|refused)|No route to host') != []
   check_mode: no
   delegate_to: localhost
-  tags: [ 'never', 'devsim' ]

@@ -187,4 +187,3 @@
       - reg_start is succeeded
   vars:
     max_heap: "{{ '64' if device.ssh|default(false)|bool else '32' }}"
-  tags: [ 'never', 'devsim' ]

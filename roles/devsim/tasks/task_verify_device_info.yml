@@ -33,4 +33,3 @@
       - device.snmpv3
       - device.api
       - device.v3authusername != device.apiusername
-  tags: [ 'never', 'devsim' ]

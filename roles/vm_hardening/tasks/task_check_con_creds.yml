@@ -5,6 +5,7 @@
       register: vh_vm_reachable
       become: yes
       check_mode: no
+      become: "{{ 'yes' if host_os|lower is search('almalinux') else 'no' }}"
       delegate_to: localhost
     - name: check original credentials
       block:
@@ -50,4 +51,3 @@
         - name: abort hardening
           ansible.builtin.fail:
             msg: 'Unable to connect to the VM. Check the connection details or that the VM is created. Aborting!'
-  tags: vm_hardening

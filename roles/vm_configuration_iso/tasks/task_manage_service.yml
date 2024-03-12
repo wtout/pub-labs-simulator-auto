@@ -7,4 +7,3 @@
       state: "{{ action }}"
       enabled: "{{ state }}"
     become: "{{ true if ansible_user != 'root' else false }}"
-  tags: vm_configuration

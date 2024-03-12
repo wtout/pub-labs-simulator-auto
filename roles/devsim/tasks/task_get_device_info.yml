@@ -40,4 +40,3 @@
       devip: "{{ previp|ansible.utils.ipmath(ipincr) if num_item > 0 else baseip }}"
   vars:
     avm_file: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avm_id }}.xml"
-  tags: [ 'never', 'devsim' ]

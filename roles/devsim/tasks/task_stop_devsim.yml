@@ -53,4 +53,3 @@
         - "{{ bad_avmid_list|join(',') }}"
     when:
       - bad_avmid_list != []
-  tags: [ 'never', 'devsim' ]

@@ -5,4 +5,3 @@
     path: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avm_id }}.xml"
     state: absent
   become: "{{ true if ansible_user != 'root' else false }}"
-  tags: [ 'never', 'devsim' ]

@@ -109,4 +109,3 @@
   - ansible.builtin.debug:
       msg: "{{ ['Active AVM ID || Active Device ID || Active Device IP'] + active_id_ip|default([]) }}"
     when: non_active_avmid_list == []
-  tags: [ 'never', 'devsim' ]

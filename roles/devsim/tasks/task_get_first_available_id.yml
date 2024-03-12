@@ -37,4 +37,3 @@
         - first_available_id|default(first_dummy_interface_id)|int < active_avmid_list|last|int
     when:
       - active_avmid_list != []
-  tags: [ 'never', 'devsim' ]

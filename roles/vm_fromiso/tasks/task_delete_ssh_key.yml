@@ -37,4 +37,3 @@
     host_network: "{{ hostvars[inventory_hostname]['build']['secondary' if 'dr' in group_names else 'primary']['networks'][inventory_hostname[-2:]|int -1] }}"
     ip_pattern: "{{ (host_network|split('/')|first|split('.'))[:2]|join('.') }}"
   delegate_to: localhost
-  tags: vm_creation

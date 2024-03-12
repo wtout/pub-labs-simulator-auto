@@ -46,4 +46,3 @@
     meta: flush_handlers
 
   - include_tasks: task_increase_max_pid_number.yml
-  tags: vm_creation

@@ -41,4 +41,3 @@
       path: "/opt/{{ automation_reponame }}/simulator/log/Simulator.log"
       state: touch
   become: "{{ true if ansible_user != 'root' else false }}"
-  tags: vm_configuration

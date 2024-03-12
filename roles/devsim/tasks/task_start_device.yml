@@ -230,4 +230,3 @@
     when: active_avmid_list is not contains(avmid)
     vars:
       max_heap: "{{ '64' if reg_ssh_enabled is succeeded else '32' }}"
-  tags: [ 'never', 'devsim' ]

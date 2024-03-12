@@ -9,4 +9,3 @@
   rescue:
   - ansible.builtin.debug:
       msg: "{{ reg_stop }}"
-  tags: [ 'never', 'devsim' ]

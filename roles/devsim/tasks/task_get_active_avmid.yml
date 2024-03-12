@@ -22,4 +22,3 @@
   - name: define active_avmid_list
     ansible.builtin.set_fact:
       active_avmid_list: "{{ reg_active.stdout_lines|map('int')|sort|map('string') }}"
-  tags: [ 'never', 'devsim' ]

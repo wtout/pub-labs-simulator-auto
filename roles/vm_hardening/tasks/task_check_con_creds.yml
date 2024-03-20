@@ -3,7 +3,6 @@
     - name: check VM reachable
       ansible.builtin.command: ping {{ ansible_host }} -c 1
       register: vh_vm_reachable
-      become: yes
       check_mode: no
       become: "{{ 'yes' if host_os|lower is search('almalinux') else 'no' }}"
       delegate_to: localhost
@@ -15,6 +14,13 @@
           register: vh_vm_creds
           check_mode: no
       rescue:
+        - block:
+          - ansible.builtin.debug:
+              msg: "VM hardening is enabled. Nothing to do"
+          - name: set flag to not harden the VM
+            ansible.builtin.set_fact:
+              hardv: false
+          when: vh_vm_creds.msg is search('This System is for the use of authorized users only')
         - name: switch to {{ vm_admin_user }} user
           ansible.builtin.set_fact:
             ansible_user: "{{ vm_admin_user }}"
@@ -44,7 +50,7 @@
           delegate_to: localhost
         - ansible.builtin.debug:
             msg: "VM hardening is enabled. Nothing to do"
-        - name: set flag to not create and configure the VMs
+        - name: set flag to not harden the VM
           ansible.builtin.set_fact:
             hardv: false
       rescue:

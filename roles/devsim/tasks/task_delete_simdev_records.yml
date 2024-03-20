@@ -1,0 +1,52 @@
+---
+# tasks to remove DNS records for simulated device and delete entries from the hosts file
+- block:
+  - name: get records info from {{ avm_file }}
+    ansible.builtin.shell: |
+      grep '^    <key name="' {{ avm_file }} | cut -d '"' -f2
+      grep -E '^        <entry name="ips"' {{ avm_file }}
+    register: reg_recinfo
+    check_mode: no
+  - block:
+    - block:
+      - name: check if hosts_addendum file exists
+        ansible.builtin.stat:
+          path: "{{ auto_dir }}/{{ vm.name + '_hosts_addendum' }}"
+        register: reg_hostfile
+        failed_when: not reg_hostfile.stat.exists
+      - name: delete entries from hosts_addendum file
+        ansible.builtin.lineinfile:
+          path: "{{ auto_dir }}/{{ vm.name + '_hosts_addendum' }}"
+          line: "{{ '%-15s'|format(myipaddress) }}\t{{ '%-25s'|format(myrecord)|string }}\t{{ '%-40s'|format(myrecord|string + '.' + mydomain) }}"
+          state: absent
+        loop: "{{ range(0,numips|int)|list  }}"
+        loop_control:
+          loop_var: loop_item
+        vars:
+          myipaddress: "{{ baseip|ansible.utils.ipmath(ipincr|int + loop_item|int) }}"
+          myrecord: "{{ myipaddress.split('.')[:2]|join('-') + '-' + reg_recinfo.stdout_lines[0] + '-' + '%02d'|format(ipincr|int + loop_item|int + 1) }}"
+          mydomain: "{{ hostvars[inventory_hostname]['sysconfig']['secondary' if 'dr' in group_names else 'primary']['domain_name'] }}"
+      rescue:
+        - ansible.builtin.debug:
+            msg: "The hosts file {{ auto_dir }}/{{ vm.name + '_hosts_addendum' }} is not found"
+      become: "{{ 'yes' if host_os is search('Alma') else 'no' }}"
+      delegate_to: localhost
+    - include_role:
+        name: infra_dns_records
+        tasks_from: task_delete_forward_record.yml
+        apply:
+          vars:
+            myserver: "{{ hostvars[inventory_hostname]['sysconfig']['secondary' if 'dr' in group_names else 'primary']['dns_servers'][0] }}"
+            myipaddress: "{{ baseip|ansible.utils.ipmath(ipincr|int + loop_item|int) }}"
+            myrecord: "{{ myipaddress.split('.')[:2]|join('-') + '-' + reg_recinfo.stdout_lines[0] + '-' + '%02d'|format(ipincr|int + loop_item|int + 1)|string }}"
+            mydomain: "{{ hostvars[inventory_hostname]['sysconfig']['secondary' if 'dr' in group_names else 'primary']['domain_name'] }}"
+            mydesignation: "simulated device {{ myrecord }}"
+      loop: "{{ range(0,numips|int)|list  }}"
+      loop_control:
+        loop_var: loop_item
+    vars:
+      numips: "{{ reg_recinfo.stdout_lines|select('search', '\"ips\"')|regex_replace('^.*ips\">(.*)</e.*$','\\1')|split('-')|last }}"
+      baseip: "{{ reg_recinfo.stdout_lines|select('search', '\"ips\"')|regex_replace('^.*ips\">(.*)</e.*$','\\1')|split('-')|first }}"
+      ipincr: "{{ '2' if (baseip.split('.')|last|int + loop_item|int) == '254' else '1' if (baseip.split('.')|last|int + loop_item|int) == '255' else '0' }}"
+  vars:
+    avm_file: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avm_id }}.xml"

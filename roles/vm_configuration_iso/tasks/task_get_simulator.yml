@@ -1,6 +1,10 @@
 ---
 # Tasks to copy the simulator packages
 - block:
+  - name: Install git
+    ansible.builtin.yum:
+      name: 'git'
+      state: installed
   - name: clone the repos
     git:
       repo: "{{ repo_item.name | regex_replace('//', '//' + repo_creds + '@') }}"

@@ -12,7 +12,7 @@
     for BUS in /sys/class/scsi_disk/*/device/rescan; do echo 1 > ${BUS}; done
     echo -e "d\n3\nn\np\n3\n\n\nw\n" | fdisk /dev/sda
     partprobe
-    xfs_growfs $(grep ' / ' /etc/fstab | awk '{print $2}')
+    xfs_growfs $(grep ' / ' /etc/fstab | grep -v '#' | awk '{print $2}')
   become: "{{ true if ansible_user != 'root' else false }}"
 
 - name: reboot vm
@@ -23,18 +23,22 @@
 
 - name: expand disk1
   ansible.builtin.shell: |
-    mp1=$(df -h | grep sdb1 | awk '{print $NF}')
-    umount ${mp1}
+    FSTYPE='xfs'
+    MP1=$(df -h | grep sdb1 | awk '{print $NF}')
+    umount ${MP1}
     {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
-    [[ "${mp1}" != "{{ vm.disk1_mount }}" ]] && mv ${mp1} {{ vm.disk1_mount }}
+    [[ "${MP1}" != "{{ vm.disk1_mount }}" ]] && mv ${MP1} {{ vm.disk1_mount }}
     for BUS in /sys/class/scsi_disk/*/device/rescan; do echo 1 > ${BUS}; done
     parted -s /dev/sdb resizepart 1 100%
     {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
-    disk1_uuid=$(blkid | grep sdb1 | awk '{print $2}' | sed 's|"||g')
-    sed -i "s|^\(.*${disk1_uuid}\) /[[:alnum:]]* xfs|\1 {{ vm.disk1_mount }} xfs|" /etc/fstab
+    disk1_uuid=$(blkid | grep sdb1 | awk '{print $2}' | sed 's|"||g; s|UUID=||')
+    sed -i "s|^\(.*${disk1_uuid}\) /[[:alnum:]]* ${FSTYPE}|\1 {{ vm.disk1_mount }} ${FSTYPE}|" /etc/fstab
     {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    systemctl daemon-reload
     mount -a
     xfs_growfs -d {{ vm.disk1_mount }}
+  args:
+    executable: /bin/bash
   become: "{{ true if ansible_user != 'root' else false }}"
 
 - name: add disk1
@@ -81,18 +85,22 @@
 
 - name: expand disk2
   ansible.builtin.shell: |
-    mp2=$(df -h | grep sdc1 | awk '{print $NF}')
-    umount ${mp2}
+    FSTYPE='xfs'
+    MP2=$(df -h | grep sdc1 | awk '{print $NF}')
+    umount ${MP2}
     {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
-    [[ "${mp2}" != "{{ vm.disk2_mount }}" ]] && mv ${mp2} {{ vm.disk2_mount }}
+    [[ "${MP2}" != "{{ vm.disk2_mount }}" ]] && mv ${MP2} {{ vm.disk2_mount }}
     for BUS in /sys/class/scsi_disk/*/device/rescan; do echo 1 > ${BUS}; done
     parted -s /dev/sdc resizepart 1 100%
     {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
-    disk2_uuid=$(blkid | grep sdc1 | awk '{print $2}' | sed 's|"||g')
-    sed -i "s|^\(.*${disk2_uuid}\) /[[:alnum:]]* xfs|\1 {{ vm.disk2_mount }} xfs|" /etc/fstab
+    disk2_uuid=$(blkid | grep sdc1 | awk '{print $2}' | sed 's|"||g; s|UUID=||')
+    sed -i "s|^\(.*${disk2_uuid}\) /[[:alnum:]]* ${FSTYPE}|\1 {{ vm.disk2_mount }} ${FSTYPE}|" /etc/fstab
     {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    systemctl daemon-reload
     mount -a
     xfs_growfs -d {{ vm.disk2_mount }}
+  args:
+    executable: /bin/bash
   become: "{{ true if ansible_user != 'root' else false }}"
 
 - name: add disk2
@@ -139,18 +147,22 @@
 
 - name: expand disk3
   ansible.builtin.shell: |
-    mp3=$(df -h | grep sdd1 | awk '{print $NF}')
-    umount ${mp3}
+    FSTYPE='xfs'
+    MP3=$(df -h | grep sdd1 | awk '{print $NF}')
+    umount ${MP3}
     {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
-    [[ "${mp3}" != "{{ vm.disk3_mount }}" ]] && mv ${mp3} {{ vm.disk3_mount }}
+    [[ "${MP3}" != "{{ vm.disk3_mount }}" ]] && mv ${MP3} {{ vm.disk3_mount }}
     for BUS in /sys/class/scsi_disk/*/device/rescan; do echo 1 > ${BUS}; done
     parted -s /dev/sdd resizepart 1 100%
     {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
-    disk3_uuid=$(blkid | grep sdd1 | awk '{print $2}' | sed 's|"||g')
-    sed -i "s|^\(.*${disk3_uuid}\) /[[:alnum:]]* xfs|\1 {{ vm.disk3_mount }} xfs|" /etc/fstab
+    disk3_uuid=$(blkid | grep sdd1 | awk '{print $2}' | sed 's|"||g; s|UUID=||')
+    sed -i "s|^\(.*${disk3_uuid}\) /[[:alnum:]]* ${FSTYPE}|\1 {{ vm.disk3_mount }} ${FSTYPE}|" /etc/fstab
     {{ 'sleep 2' if build.version.os_iso|lower is search('centos') else '' }}
+    systemctl daemon-reload
     mount -a
     xfs_growfs -d {{ vm.disk3_mount }}
+  args:
+    executable: /bin/bash
   become: "{{ true if ansible_user != 'root' else false }}"
 
 - name: add disk3

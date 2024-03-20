@@ -7,7 +7,7 @@
     when:
       - active_avmid_list == []
   - block:
-    - name: define first_available_id
+    - name: define first_available_id (increment last active ID)
       ansible.builtin.set_fact:
         first_available_id: "{{ active_avmid_list|last|int + 1 }}"
       when:
@@ -26,7 +26,7 @@
         when:
           - first_available_id is not defined or first_available_id == ''
           - fid|default('') == ''
-      - name: define first_available_id
+      - name: define first_available_id (fid)
         ansible.builtin.set_fact:
           first_available_id: "{{ fid }}"
           fid: ''

@@ -12,7 +12,7 @@
       validate_certs: no
     check_mode: no
     ignore_errors: true
-    register: vmguest_info
+    register: reg_vmguest_info
 
   - name: define nic1
     ansible.builtin.set_fact:
@@ -56,6 +56,10 @@
     - include_tasks: task_deploy_iso.yml
     rescue:
     - include_tasks: task_delete_vm.yml
-    - include_tasks: task_deploy_iso.yml
+    - block:
+      - include_tasks: task_deploy_iso.yml
+      rescue:
+      - include_tasks: task_delete_vm.yml
+      - include_tasks: task_deploy_iso.yml
 
   delegate_to: localhost

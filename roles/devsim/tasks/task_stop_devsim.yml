@@ -21,6 +21,15 @@
     loop_control:
       loop_var: id_item
     when: stop_devsim|default(false)|bool
+  - include_tasks:
+      file: task_delete_simdev_records.yml
+      apply:
+        vars:
+          avm_id: "{{ id_item }}"
+    loop: "{{ good_avmid_list|sort(reverse=True) }}"
+    loop_control:
+      loop_var: id_item
+    when: rollback_devsim|default(false)|bool or rollback_vms_iso|default(false)|bool
   - block:
     - include_tasks:
         file: task_stop_avm.yml

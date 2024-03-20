@@ -7,7 +7,8 @@
     - include_tasks: task_check_con_creds.yml
     - include_tasks: task_create_vms.yml
     when: create_vms_iso | default(false) | bool
-
-  - include_tasks: task_rollback_vms.yml
+  - block:
+    - include_tasks: task_check_con_creds.yml
+    - include_tasks: task_rollback_vms.yml
     when: rollback_vms_iso | default(false) | bool
   tags: vm_creation

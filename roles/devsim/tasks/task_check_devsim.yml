@@ -40,7 +40,7 @@
         loop_var: id_item
     - name: define non_active_id_ip
       ansible.builtin.set_fact:
-        non_active_id_ip: "{{ non_active_id_ip|default([]) + [([task_item.0] + task_item.1)|join(' || ')] }}"
+        non_active_id_ip: "{{ non_active_id_ip|default([]) + [(['%-17s'|format(task_item.0)] + ['%-21s'|format(task_item.1|first)] + ['%-16s'|format(task_item.1|last)])|join(' || ')] }}"
       loop: "{{ read_avmid_list|zip(read_device_list|zip(read_ip_list)) }}"
       loop_control:
         loop_var: task_item
@@ -90,22 +90,22 @@
   - name: write active device info to file
     ansible.builtin.copy:
       content: "{{ active_dev_info|join('\n')|replace('True','yes')|replace('False','no') }}"
-      dest: "{{ auto_dir }}/active_simulated_devices.csv"
+      dest: "{{ auto_dir }}/{{ vm.name }}_active_simulated_devices.csv"
     delegate_to: localhost
-    become: yes
+    become: "{{ 'yes' if host_os is search('Alma') else 'no' }}"
     when: active_dev_info|default([]) != []
   - name: define active_id_ip
     ansible.builtin.set_fact:
-      active_id_ip: "{{ active_id_ip|default([]) + [([task_item.0] + task_item.1)|join(' || ')] }}"
+      active_id_ip: "{{ active_id_ip|default([]) + [(['%-17s'|format(task_item.0)] + ['%-21s'|format(task_item.1|first)] + ['%-16s'|format(task_item.1|last)])|join(' || ')] }}"
     loop: "{{ read_avmid_list|zip(read_device_list|zip(read_ip_list)) }}"
     loop_control:
       loop_var: task_item
       label: "{{ task_item|flatten }}"
   - ansible.builtin.debug:
       msg:
-        - "{{ ['Non-Active AVM ID || Non-Active Device ID || Non-Active Device IP'] + non_active_id_ip|default([]) }}"
-        - "{{ ['Active AVM ID || Active Device ID || Active Device IP'] + active_id_ip|default([]) }}"
+        - "{{ ['%-17s'|format('Non-Active AVM ID') + ' || ' + '%-21s'|format('Non-Active Device ID') + ' || ' + '%-21s'|format('Non-Active Device IP')] + non_active_id_ip|default([]) }}"
+        - "{{ ['%-17s'|format('Active AVM ID') + ' || ' + '%-21s'|format('Active Device ID') + ' || ' + '%-21s'|format('Active Device IP')] + active_id_ip|default([]) }}"
     when: non_active_avmid_list != []
   - ansible.builtin.debug:
-      msg: "{{ ['Active AVM ID || Active Device ID || Active Device IP'] + active_id_ip|default([]) }}"
+      msg: "{{ ['%-17s'|format('Active AVM ID') + ' || ' + '%-21s'|format('Active Device ID') + ' || ' + '%-21s'|format('Active Device IP')] + active_id_ip|default([]) }}"
     when: non_active_avmid_list == []

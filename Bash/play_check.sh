@@ -1,4 +1,4 @@
 #! /bin/bash
-# Usage sh Bash/play_check.sh
+# Usage bash Bash/play_check.sh
 
-source Bash/.play.sh
+source $(dirname "${0}")/.plays.sh

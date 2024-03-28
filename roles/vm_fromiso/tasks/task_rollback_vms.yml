@@ -7,7 +7,7 @@
         tasks_from: task_stop_devsim
     - include_tasks: task_delete_vm.yml
     when:
-      - crecon | default(false) | bool
+      - not crecon | default(true) | bool
   - include_tasks:
       file: task_delete_folder.yml
       apply:

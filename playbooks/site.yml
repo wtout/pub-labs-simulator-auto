@@ -29,11 +29,11 @@
 
   tasks:
     - block:
-      - include_role:
+      - ansible.builtin.include_role:
           name: capcheck
         when: capcheck | default(false) | bool
         tags: ['capcheck', 'vm_creation']
-      - include_role:
+      - ansible.builtin.include_role:
           name: infra_dns_records
         when: add_dns_records | default(false) | bool
         tags: [ 'infra_dns_records', 'vm_creation' ]
@@ -47,14 +47,10 @@
 
   tasks:
     - block:
-      - include_role:
+      - ansible.builtin.include_role:
           name: vm_fromiso
         when: create_vms_iso | default(false) | bool
         tags: vm_creation
-      - include_role:
-          name: vm_hardening
-        when: harden_vms | default(false) | bool
-        tags: vm_hardening
       when: deploy | default(false) | bool
 
 # Play to configure the VMs
@@ -64,7 +60,11 @@
 
   tasks:
     - block:
-      - include_role:
+      - ansible.builtin.include_role:
+          name: vm_hardening
+        when: harden_vms | default(false) | bool
+        tags: vm_hardening
+      - ansible.builtin.include_role:
           name: vm_configuration_iso
         when: configure_vms_iso | default(false) | bool
         tags: vm_configuration
@@ -77,7 +77,7 @@
 
   tasks:
     - block:
-      - include_role:
+      - ansible.builtin.include_role:
           name: devsim
         when: deploy_devsim | default(false) | bool or start_devsim | default(false) | bool or check_devsim | default(false) | bool or stop_devsim | default(false) | bool or rollback_devsim | default(false) | bool
         tags: [ 'never', 'devsim' ]
@@ -91,11 +91,11 @@
 
   tasks:
     - block:
-      - include_role:
+      - ansible.builtin.include_role:
           name: vm_fromiso
         when: rollback_vms_iso | default(false) | bool
         tags: vm_creation
-      - include_role:
+      - ansible.builtin.include_role:
           name: infra_dns_records
         when: rollback_dns_records | default(false) | bool
         tags: [ 'infra_dns_records', 'vm_creation' ]

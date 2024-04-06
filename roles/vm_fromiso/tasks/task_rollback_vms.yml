@@ -1,13 +1,12 @@
 ---
 # Tasks to rollback VMs
 - block:
-  - block:
-    - include_role:
-        name: devsim
-        tasks_from: task_stop_devsim
-    - include_tasks: task_delete_vm.yml
+  - include_role:
+      name: devsim
+      tasks_from: task_stop_devsim
     when:
       - not crecon | default(true) | bool
+  - include_tasks: task_delete_vm.yml
   - include_tasks:
       file: task_delete_folder.yml
       apply:

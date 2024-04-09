@@ -15,6 +15,9 @@
       no_log: yes
       delegate_to: localhost
     - include_tasks: task_poweron_vm.yml
+    - name: set flag to not create and configure the VMs
+      ansible.builtin.set_fact:
+        crecon: false
     rescue:
       - name: switch to {{ vm_admin_user }} user
         ansible.builtin.set_fact:
@@ -70,11 +73,6 @@
             register: vcr_vm_connection
             check_mode: no
             delegate_to: localhost
-          - ansible.builtin.debug:
-              msg: "VM hardening is enabled. Not creating the VM"
-          - name: set flag to not create and configure the VMs
-            ansible.builtin.set_fact:
-              crecon: false
         rescue:
           - name: revert user
             ansible.builtin.set_fact:

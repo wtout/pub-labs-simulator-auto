@@ -17,7 +17,7 @@
       - name: delete entries from hosts_addendum file
         ansible.builtin.lineinfile:
           path: "{{ auto_dir }}/{{ vm.name + '_hosts_addendum' }}"
-          line: "{{ '%-15s'|format(myipaddress) }}\t{{ '%-25s'|format(myrecord)|string }}\t{{ '%-40s'|format(myrecord|string + '.' + mydomain) }}"
+          line: "{{ '%-15s'|format(myipaddress) }}\t{{ '%-30s'|format(myrecord)|string }}\t{{ '%-40s'|format(myrecord|string + '.' + mydomain) }}"
           state: absent
         loop: "{{ range(0,numips|int)|list  }}"
         loop_control:

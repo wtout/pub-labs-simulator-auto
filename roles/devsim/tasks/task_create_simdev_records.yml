@@ -9,7 +9,7 @@
     - name: write to hosts_addendum file
       ansible.builtin.lineinfile:
         path: "{{ auto_dir }}/{{ vm.name + '_hosts_addendum' }}"
-        line: "{{ '%-15s'|format(myipaddress) }}\t{{ '%-25s'|format(myrecord)|string }}\t{{ '%-40s'|format(myrecord|string + '.' + mydomain) }}"
+        line: "{{ '%-15s'|format(myipaddress) }}\t{{ '%-30s'|format(myrecord)|string }}\t{{ '%-40s'|format(myrecord|string + '.' + mydomain) }}"
       loop: "{{ range(0,device.num|int)|list  }}"
       loop_control:
         loop_var: loop_item

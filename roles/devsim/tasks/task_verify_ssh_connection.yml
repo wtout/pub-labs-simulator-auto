@@ -3,7 +3,7 @@
 - block:
   - name: verify ssh connection to device at {{ ip }}
     ansible.builtin.shell: |
-      timeout 15s sshpass -p {{ password }} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -T {{ username }}@{{ ip }} <<EOF
+      timeout 15s sshpass -p {{ password }} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostKeyAlgorithms=+ssh-rsa -T {{ username }}@{{ ip }} <<EOF
       show version
       EOF
     register: reg_ssh

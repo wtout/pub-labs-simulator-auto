@@ -11,18 +11,18 @@
       ansible.builtin.set_fact:
         first_available_id: "{{ active_avmid_list|last|int + 1 }}"
       when:
-        - range(first_dummy_interface_id|int, active_avmid_list|last|int + 1)|map('string')|difference(active_avmid_list) == [] or device.num|int > 1
+        - range(first_dummy_interface_id|int, active_avmid_list|last|int + 1)|map('string')|community.general.lists_difference(active_avmid_list) == [] or device.num|int > 1
     - block:
       - name: define fid (defined)
         ansible.builtin.set_fact:
-          fid: "{{ range(first_available_id|int + 1, active_avmid_list|last|int + 1)|map('string')|difference(active_avmid_list)|first }}"
+          fid: "{{ range(first_available_id|int + 1, active_avmid_list|last|int + 1)|map('string')|community.general.lists_difference(active_avmid_list)|first }}"
         when:
           - first_available_id is defined
           - first_available_id != ''
           - fid|default('') == ''
       - name: define fid (undefined)
         ansible.builtin.set_fact:
-          fid: "{{ range(first_dummy_interface_id|int, active_avmid_list|last|int + 1)|map('string')|difference(active_avmid_list)|first }}"
+          fid: "{{ range(first_dummy_interface_id|int, active_avmid_list|last|int + 1)|map('string')|community.general.lists_difference(active_avmid_list)|first }}"
         when:
           - first_available_id is not defined or first_available_id == ''
           - fid|default('') == ''

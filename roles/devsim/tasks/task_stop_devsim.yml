@@ -9,8 +9,8 @@
     when: AVMLIST|default('') == ''
   - name: define avmid lists
     ansible.builtin.set_fact:
-      good_avmid_list: "{{ AVMLIST|split(',')|list | intersect(active_avmid_list)|map('int')|sort|map('string') }}"
-      bad_avmid_list: "{{ AVMLIST|split(',')|list | difference(active_avmid_list)|map('int')|sort|map('string') }}"
+      good_avmid_list: "{{ AVMLIST|split(',')|list | community.general.lists_intersect(active_avmid_list)|map('int')|sort|map('string') }}"
+      bad_avmid_list: "{{ AVMLIST|split(',')|list | community.general.lists_difference(active_avmid_list)|map('int')|sort|map('string') }}"
     when: AVMLIST|default('') != ''
   - include_tasks:
       file: task_stop_avm.yml

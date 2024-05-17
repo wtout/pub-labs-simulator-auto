@@ -61,6 +61,11 @@
     - block:
       - block:
         - include_tasks:
+            file: task_create_dummy_interface.yml
+            apply:
+              vars:
+                int_id: "{{ avmid }}"
+        - include_tasks:
             file: task_start_avm.yml
             apply:
               vars:

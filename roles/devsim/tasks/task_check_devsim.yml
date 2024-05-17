@@ -5,7 +5,7 @@
   - include_tasks: task_get_file_avmid.yml
   - name: define non_active_avmid_list
     ansible.builtin.set_fact:
-      non_active_avmid_list: "{{ file_avmid_list | difference(active_avmid_list) }}"
+      non_active_avmid_list: "{{ file_avmid_list | community.general.lists_difference(active_avmid_list) }}"
   - block:
     - name: initialize device info lists
       ansible.builtin.set_fact:

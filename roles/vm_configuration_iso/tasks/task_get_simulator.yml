@@ -1,6 +1,14 @@
 ---
 # Tasks to copy the simulator packages
 - block:
+  - name: fix the Centos7 yum issue (due to EOL)
+    ansible.builtin.shell: |
+      sed -i -e 's/mirrorlist=/#mirrorlist=/g' /etc/yum.repos.d/CentOS-*
+      sed -i -e 's/mirrorlist=/#mirrorlist=/g' /etc/yum.conf
+      sed -E -i -e 's/#baseurl=http:\/\/mirror.centos.org\/centos\/\$releasever\/([[:alnum:]_-]*)\/\$basearch\//baseurl=https:\/\/vault.centos.org\/{{ centos_string }}\/\1\/\$basearch\//g' /etc/yum.repos.d/CentOS-*
+      sed -E -i -e 's/#baseurl=http:\/\/mirror.centos.org\/centos\/\$releasever\/([[:alnum:]_-]*)\/\$basearch\//baseurl=https:\/\/vault.centos.org\/{{ centos_string }}\/\1\/\$basearch\//g' /etc/yum.conf
+    vars:
+      centos_string: "{{ '7.7.1908' if build.version.os_iso is search('1908') else '7.9.2009' if build.version.os_iso is search('2009') else '' }}"
   - name: Install git
     ansible.builtin.yum:
       name: 'git'

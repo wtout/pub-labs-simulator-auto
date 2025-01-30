@@ -1,0 +1,113 @@
+---
+# Build information
+build:
+
+  # Build name (string)
+  name: PAESIMD
+
+  # team_contact1 (string)
+  team_contact1: 
+
+  # team_contact2 (string)
+  team_contact2: 
+
+  # team_mailer (string)
+  team_mailer: 
+
+  version:
+
+    # OS ISO (required) (string)
+    os_iso: 
+
+  # Deployment model (required) (string a/h)
+  deployment_model: h
+
+  # Disaster recovery (required) (boolean yes/no)
+  disaster_recovery: no
+
+  primary:
+
+  # Number of primary VMs (required) (integer)
+    number_of_lnxvm: 1
+
+  # Simulator Network(s) (required) (list of strings)
+    networks: 23.0.0.0/16
+
+  # Primary site name prefix (required) (string)
+    name_prefix: paesimulatord
+
+  # Primary site first 3 octets (required) (string)
+    octets: 172.30.251
+
+  secondary:
+
+  # Number of secondary VMs (required) (integer)
+    number_of_lnxvm: 
+
+  # Simulator Network(s) (required) (list of strings)
+    networks: 
+
+  # Secondary site name prefix (required) (string)
+    name_prefix: 
+
+  # Secondary site first 3 octets (required) (string)
+    octets: 
+
+##################################################################################
+# Datacenter where the stack is to be built
+##################################################################################
+datacenter:
+
+  primary:
+
+    # Available datacenters: STG-HX-DC, RTP-Staging, PAE-HX-DC-1, PAE-HX-DC-2, PAE-HX-DC-3, PAE-HX-DC-4, Plat-Ops, Dev Engineering, cdra-Build-Development, PAE-Customer-Build, RTP5, Alln1 (required) (string)
+    name: 'PAE-HX-DC-2'
+
+    # Required if a custom cluster name is to be used
+    # The primary cluster to host the build's primary stack
+    cluster: 
+
+    # Required if a custom folder name is to be used
+    # The primary folder to host the customer's primary stack
+    folder: 'Device Availability'
+
+    # Required ONLY for on-premise deployments, define the list of esxi hosts (resources) to use (string)
+    # For hosted deployments DO NOT TOUCH
+    # Use ',', ';' or space as separator when you have more than one host
+    resources: 
+
+  secondary:
+
+    # Available datacenters: STG-HX-DC, RTP-Staging, PAE-HX-DC-1, PAE-HX-DC-2, PAE-HX-DC-3, PAE-HX-DC-4, Plat-Ops, Dev Engineering, cdra-Build-Development, PAE-Customer-Build, RTP5, Alln1 (required) (string)
+    name: 
+
+    # Required if a custom cluster name is to be used
+    # The secondary cluster to host the build's secondary stack
+    cluster: 
+
+    # Required if a custom folder name is to be used
+    # The secondary folder to host the customer's secondary stack
+    folder: 
+
+    # Required ONLY for on-premise deployments, define the list of esxi hosts (resources) to use (string)
+    # For hosted deployments DO NOT TOUCH
+    # Use ',', ';' or space as separator when you have more than one host
+    resources: 
+
+
+##############################################################################
+# These variables are mandatory because there are only a few default values defined for VMs
+# VM Settings information. Memory and disk size must be in GiB
+##############################################################################
+vm_setting:
+  lnxvm:
+    cpu: 4
+    memory: 32
+    disk0: 40
+    disk1: 100
+    nic1:
+      ip_octetpool: ['62']
+      gtw: '172.30.251.254'
+      netmask: '255.255.255.0'
+      netname: 'HX-DVS-251'
+      intname: 'ens160'

@@ -1,0 +1,8 @@
+---
+# Update OS
+- block:
+  - name: Update OS
+    ansible.builtin.yum:
+      name: '*'
+      state: latest
+  become: "{{ true if ansible_user != 'root' else false }}"

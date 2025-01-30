@@ -1,0 +1,21 @@
+---
+# Tasks to update crypto policies
+- block:
+  - name: get the Linux distribution
+    ansible.builtin.setup:
+      filter:
+        - 'distribution'
+        - 'distribution*version'
+  - block:
+    - name: check current crypto policies setting
+      ansible.builtin.command: update-crypto-policies --show
+      register: reg_crypto_policies
+      check_mode: no
+    - name: Add SHA1 to crypto policies
+      ansible.builtin.command: update-crypto-policies --set DEFAULT:SHA1
+      when: reg_crypto_policies.stdout == 'DEFAULT'
+    when:
+      - ansible_facts.distribution == 'AlmaLinux'
+      - ansible_facts.distribution_major_version == '9'
+    become: true
+  delegate_to: localhost

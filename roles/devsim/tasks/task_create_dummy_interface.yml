@@ -1,0 +1,8 @@
+---
+# tasks to create dummy interface
+- name: create dummy{{ int_id }} interface
+  ansible.builtin.shell: |
+    ip link add dummy{{ int_id }} type dummy
+    ip addr add 192.0.0.1/24 dev dummy{{ int_id }}
+    ip link set up dummy{{ int_id }}
+  become: "{{ true if ansible_user != 'root' else false }}"

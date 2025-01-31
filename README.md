@@ -80,7 +80,7 @@ If the _``/data/Packages``_ directory does not exist, the user must create a _``
 
 1- From the automation root directory (pub-labs-simulator-auto), run one of the bash scripts under the Bash directory depending on what you want to do. 
 
-    $> sh Bash/<script name> --envname <system-name>
+    $> bash Bash/<script name> --envname <system-name>
 
 with the _``system-name``_ being the name of the system definition file from "System Definition" and the script name being one of the following options:
 

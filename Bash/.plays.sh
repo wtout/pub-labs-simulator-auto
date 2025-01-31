@@ -18,14 +18,16 @@ add_user_docker_group
 create_dir "${ANSIBLE_LOG_LOCATION}"
 check_docker_login
 restart_docker
-#git_config
-#[[ "$(git config --file .git/config user.name|cut -d ' ' -f2 | tr '[:upper:]' '[:lower:]')" == "tout" ]] && image_prune
+git_config
+[[ "$(git config --file .git/config user.name|cut -d ' ' -f2 | tr '[:upper:]' '[:lower:]')" == "tout" ]] && image_prune
 pull_image
 start_container "${CONTAINERNAME}"
 add_write_permission "${PWD}/vars"
+add_write_permission "${PWD}/roles"
+find "${PWD}/roles" -type d -name files -exec dirname {} \; | sort -u | xargs -I {} add_write_permission "{}"
+find "${PWD}/roles" -type d -name files -exec chmod 757 {} \;
 get_repo_creds "${CONTAINERNAME}" "${REPOVAULT}" Bash/get_repo_vault_pass.sh
 get_secrets_vault "${CONTAINERNAME}" "${REPOVAULT}" Bash/get_repo_vault_pass.sh
-read -r
 if [[ -z ${MYINVOKER+x} ]]
 then
 	check_updates "${CONTAINERNAME}" "${REPOVAULT}" Bash/get_repo_vault_pass.sh
@@ -71,6 +73,10 @@ else
 			EC=1
 		fi
 	done
+	# Clean up
 	remove_secrets_vault
+	remove_write_permission "${PWD}/vars"
+	remove_write_permission "${PWD}/roles"
+	find "${PWD}/roles" -type d -exec chmod 755 {} \;
 	exit "${EC}"
 fi

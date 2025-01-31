@@ -432,6 +432,13 @@ function add_write_permission() {
 	done
 }
 
+function remove_write_permission() {
+	for i in ${*}
+	do
+		sudo chmod o-w ${i}
+	done
+}
+
 function get_creds_prefix() {
     local FILETOCHECK
     local DATACENTER

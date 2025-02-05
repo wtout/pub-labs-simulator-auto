@@ -10,6 +10,5 @@ ANSIBLE_VARS="vars/datacenters.yml"
 PASSVAULT="vars/passwords.yml"
 REPOVAULT="vars/.repovault.yml"
 CONTAINERWD="/home/ansible/$(basename ${PWD})"
-CONTAINERREPO="containers.cisco.com/pae-labs-automation/ansible"
-SECON=$([[ "$(git config --file .git/config user.email|cut -d '@' -f1)" == "watout" ]] && echo "false" || echo "true")
-
+CONTAINERREPO="registry-1.docker.io/wtout/ansible"
+SECON=$([[ "$(git config --file .git/config user.name|cut -d ' ' -f2 | tr '[:upper:]' '[:lower:]')" == "tout" ]] && echo "false" || echo "true")

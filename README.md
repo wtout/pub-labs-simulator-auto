@@ -23,11 +23,11 @@ On a newly installed Linux **CentOS 7.7+** VM that has docker installed and conf
 
 6- Download the Ansible automation package
 
-    $> git clone https://wwwin-github.cisco.com/cms-pae/pae-labs-simulator-auto.git
+    $> git clone https://github.com/wtout/pub-labs-simulator-auto.git
 
-7- Go to the newly cloned pae-labs-simulator-auto directory
+7- Go to the newly cloned pub-labs-simulator-auto directory
 
-    $> cd pae-labs-simulator-auto
+    $> cd pub-labs-simulator-auto
 
 ***Note**: you might need to disable the proxy to be able to clone the repository*
 
@@ -64,7 +64,7 @@ The system definition file consists of the following variables:
   - **datacenter.secondary.folder** (_String_): The folder to host the build's secondary VMs
   - **datacenter.secondary.resources** (_String_): Required for on-prem deployments. List of ESXI hosts
 
-To create the system inventory without deploying the system, issue the following command from the automation root directory (pae-labs-simulator-auto):
+To create the system inventory without deploying the system, issue the following command from the automation root directory (pub-labs-simulator-auto):
 
     $> bash Bash/play_deploy.sh --envname <system-name> --tags none
 
@@ -78,9 +78,9 @@ If the _``/data/Packages``_ directory does not exist, the user must create a _``
 
 ### System Deployment ###
 
-1- From the automation root directory (pae-labs-simulator-auto), run one of the bash scripts under the Bash directory depending on what you want to do. 
+1- From the automation root directory (pub-labs-simulator-auto), run one of the bash scripts under the Bash directory depending on what you want to do. 
 
-    $> sh Bash/<script name> --envname <system-name>
+    $> bash Bash/<script name> --envname <system-name>
 
 with the _``system-name``_ being the name of the system definition file from "System Definition" and the script name being one of the following options:
 
@@ -133,7 +133,7 @@ To limit the processing to specific host(s) or group(s) or a combination of both
 
 ### Device Simulator Management ###
 
-From the automation root directory (pae-labs-simulator-auto), run one of the bash scripts under the Bash directory depending on what you want to do. 
+From the automation root directory (pub-labs-simulator-auto), run one of the bash scripts under the Bash directory depending on what you want to do. 
 
     $> bash Bash/<script name> --envname <system-name> --tags devsim [--avmlist id1,id2,etc...]
 

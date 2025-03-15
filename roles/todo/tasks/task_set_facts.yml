@@ -1,0 +1,97 @@
+---
+- name: define capcheck
+  ansible.builtin.set_fact:
+    capcheck: true
+  when:
+    - deploy | default(false) | bool
+    - "'vcenter' in group_names or (build.disaster_recovery and 'drvcenter' in group_names)"
+  tags: [ 'capcheck', 'vm_creation' ]
+  
+- name: define create_vms_iso
+  ansible.builtin.set_fact:
+    create_vms_iso: true
+  when:
+    - deploy | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+  tags: vm_creation
+
+- name: define rollback_vms_iso
+  ansible.builtin.set_fact:
+    rollback_vms_iso: true
+  when:
+    - rollback | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+  tags: vm_creation
+
+- name: define harden_vms
+  ansible.builtin.set_fact:
+    harden_vms: true
+  when:
+    - deploy | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+    - build.version.os_iso|lower is not search('ubuntu')
+  tags: vm_hardening
+
+- name: define configure_vms_iso
+  ansible.builtin.set_fact:
+    configure_vms_iso: true
+  when:
+    - deploy | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+  tags: [ 'vm_configuration' ]
+
+- name: define deploy_devsim
+  ansible.builtin.set_fact:
+    deploy_devsim: true
+  when:
+    - deploy | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+  tags: [ 'never', 'devsim' ]
+
+- name: define start_devsim
+  ansible.builtin.set_fact:
+    start_devsim: true
+  when:
+    - start | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+  tags: [ 'never', 'devsim' ]
+
+- name: define stop_devsim
+  ansible.builtin.set_fact:
+    stop_devsim: true
+  when:
+    - stop | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+  tags: [ 'never', 'devsim' ]
+
+- name: define rollback_devsim
+  ansible.builtin.set_fact:
+    rollback_devsim: true
+  when:
+    - rollback | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+  tags: [ 'never', 'devsim' ]
+
+- name: define check_devsim
+  ansible.builtin.set_fact:
+    check_devsim: true
+  when:
+    - check | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+  tags: [ 'never', 'devsim' ]
+
+- name: define add_dns_records
+  set_fact:
+    add_dns_records: true
+  when: 
+    - deploy | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+  tags: [ 'infra_dns_records', 'vm_creation' ]
+
+- name: define rollback_dns_records
+  set_fact:
+    rollback_dns_records: true
+  when: 
+    - rollback | default(false) | bool
+    - "'stack' in group_names or (build.disaster_recovery and 'dr' in group_names)"
+  tags: [ 'infra_dns_records', 'vm_creation' ]

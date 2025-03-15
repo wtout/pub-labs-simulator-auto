@@ -1,0 +1,10 @@
+---
+# tasks to remove docker0 interface from the EM7 VMs
+- block:
+  - name: Add static route
+    ansible.builtin.copy:
+      content: "{{ host_network + ' via ' + ansible_host + ' ' + (netconfig.nic2.intname if netconfig.nic2.ipaddress != '' else netconfig.nic1.intname) }}"
+      dest: "/etc/sysconfig/network-scripts/route-{{ netconfig.nic2.intname if netconfig.nic2.ipaddress != '' else netconfig.nic1.intname }}"
+    become: "{{ true if ansible_user != 'root' else false }}"
+  vars:
+    host_network: "{{ hostvars[inventory_hostname]['build']['secondary' if 'dr' in group_names else 'primary']['networks'][inventory_hostname[-2:]|int -1] }}"

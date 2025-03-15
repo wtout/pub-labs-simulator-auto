@@ -1,0 +1,190 @@
+---
+# tasks to simulate a device
+- block:
+  - include_tasks: task_get_active_avmid.yml
+  - include_tasks: task_get_first_available_id.yml
+  - include_tasks:
+      file: task_get_first_available_ip.yml
+      apply:
+        vars:
+          avm_id: "{{ first_available_id }}"
+  - include_tasks:
+      file: task_create_avm_file.yml
+      apply:
+        vars:
+          avm_id: "{{ first_available_id }}"
+  - include_tasks:
+      file: task_create_dummy_interface.yml
+      apply:
+        vars:
+          int_id: "{{ first_available_id }}"
+  - block:
+    - include_tasks:
+        file: task_start_avm.yml
+        apply:
+          vars:
+            avm_id: "{{ first_available_id }}"
+            max_heap_size: "{{ new_heap }}"
+      vars:
+        adj_heap: "{{ max_heap|int + 2 * (first_available_id|int - 100) }}"
+        new_heap: "{{ [adj_heap|int,2048]|min }}"
+    rescue:
+    - include_tasks:
+        file: task_stop_avm.yml
+        apply:
+          vars:
+            avm_id: "{{ first_available_id }}"
+    - block:
+      - include_tasks:
+          file: task_delete_avm_file.yml
+          apply:
+            vars:
+              avm_id: "{{ first_available_id }}"
+      - include_tasks:
+          file: task_delete_dummy_interface.yml
+          apply:
+            vars:
+              int_id: "{{ first_available_id }}"
+      when: reg_start.stderr is search('file not found')
+    - include_tasks:
+        file: task_start_avm.yml
+        apply:
+          vars:
+            avm_id: "{{ first_available_id }}"
+            max_heap_size: "{{ [new_heap|int,256]|max }}"
+      vars:
+        adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
+        new_heap: "{{ [adj_heap|int,2048]|min }}"
+      when: reg_start.stderr is search('Invalid maximum heap size|heap space|GC overhead limit exceeded')
+  - include_tasks: task_create_simdev_records.yml
+  - block:
+    - name: get highest used IP
+      ansible.builtin.shell: |
+        ip a show dummy{{ first_available_id }}|grep inet|tail -1|awk '{print $2}'|cut -d '/' -f1
+      register: reg_highest_ip
+      failed_when: reg_highest_ip.stderr is search('does not exist')
+      become: "{{ true if ansible_user != 'root' else false }}"
+      check_mode: no
+      when: device.ssh|default(false)|bool or device.snmpv2|default(false)|bool or device.snmpv3|default(false)|bool or device.api|default(false)|bool
+    - block:
+      - include_tasks:
+          file: task_verify_ssh_connection.yml
+          apply:
+            vars:
+              ip: "{{ reg_highest_ip.stdout }}"
+              username: "{{ device.username }}"
+              password: "{{ device.password }}"
+      rescue:
+      - include_tasks:
+          file: task_stop_avm.yml
+          apply:
+            vars:
+              avm_id: "{{ first_available_id }}"
+      - include_tasks:
+          file: task_start_avm.yml
+          apply:
+            vars:
+              avm_id: "{{ first_available_id }}"
+              max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320 if device.num|int < 4000 else 576)]|max }}"
+        vars:
+          adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
+          new_heap: "{{ [adj_heap|int,2048]|min }}"
+      - include_tasks:
+          file: task_verify_ssh_connection.yml
+          apply:
+            vars:
+              ip: "{{ reg_highest_ip.stdout }}"
+              username: "{{ device.username }}"
+              password: "{{ device.password }}"
+      when:
+        - device.ssh|default(false)|bool
+    - block:
+      - block:
+        - include_tasks:
+            file: task_verify_snmp_response.yml
+            apply:
+              vars:
+                devid: "{{ device.id }}"
+                ip: "{{ reg_highest_ip.stdout }}"
+                snmpv2: "{{ device.snmpv2 }}"
+                snmpv3: "{{ device.snmpv3 }}"
+                comstr: "{{ device.community }}"
+                authpr: "{{ device.v3authprotocol }}"
+                privpr: "{{ device.v3privprotocol }}"
+                authusr: "{{ device.v3authusername }}"
+                authpas: "{{ device.v3authpassword }}"
+                privpas: "{{ device.v3privpassword }}"
+        rescue:
+        - include_tasks:
+            file: task_stop_avm.yml
+            apply:
+              vars:
+                avm_id: "{{ first_available_id }}"
+        - include_tasks:
+            file: task_start_avm.yml
+            apply:
+              vars:
+                avm_id: "{{ first_available_id }}"
+                max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320 if device.num|int < 4000 else 576)]|max }}"
+          vars:
+            adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
+            new_heap: "{{ [adj_heap|int,2048]|min }}"
+        - include_tasks:
+            file: task_verify_snmp_response.yml
+            apply:
+              vars:
+                devid: "{{ device.id }}"
+                ip: "{{ reg_highest_ip.stdout }}"
+                snmpv2: "{{ device.snmpv2 }}"
+                snmpv3: "{{ device.snmpv3 }}"
+                comstr: "{{ device.community }}"
+                authpr: "{{ device.v3authprotocol }}"
+                privpr: "{{ device.v3privprotocol }}"
+                authusr: "{{ device.v3authusername }}"
+                authpas: "{{ device.v3authpassword }}"
+                privpas: "{{ device.v3privpassword }}"
+      - name: define snmp_flawed_recording_list
+        ansible.builtin.set_fact:
+          snmp_flawed_recording_list: "{{ snmp_flawed_recording_list|default([]) + [device.id + ': ' + ((reg_snmpv3_response.module_stderr if reg_snmpv3_response.module_stderr is defined and reg_snmpv3_response.module_stderr != '' else reg_snmpv3_response.msg) if device.snmpv3|default(false) else (reg_snmpv2_response.module_stderr if reg_snmpv2_response.module_stderr is defined and reg_snmpv2_response.module_stderr != '' else reg_snmpv2_response.msg))|string] }}"
+        when:
+          - (device.snmpv2|default(false)|bool and reg_snmpv2_response.msg is defined and reg_snmpv2_response.msg is not search('No SNMP response received before timeout')) or (device.snmpv3|default(false)|bool and reg_snmpv3_response.msg is defined and reg_snmpv3_response.msg is not search('No SNMP response received before timeout'))
+      when:
+        - device.snmpv2|default(false)|bool or device.snmpv3|default(false)|bool
+    - block:
+      - include_tasks:
+          file: task_verify_api_response.yml
+          apply:
+            vars:
+              ip: "{{ reg_highest_ip.stdout }}"
+              devid: "{{ device.id }}"
+              apis: "{{ device.apisecure }}"
+              aport: "{{ device.apiport }}"
+      rescue:
+      - include_tasks:
+          file: task_stop_avm.yml
+          apply:
+            vars:
+              avm_id: "{{ first_available_id }}"
+      - include_tasks:
+          file: task_start_avm.yml
+          apply:
+            vars:
+              avm_id: "{{ first_available_id }}"
+              max_heap_size: "{{ [new_heap|int,(device.num|int / 100)|round|int * 32 + (256 if device.num|int < 900 else 320 if device.num|int < 4000 else 576)]|max }}"
+        vars:
+          adj_heap: "{{ max_heap|int + 8 * (first_available_id|int - 100) }}"
+          new_heap: "{{ [adj_heap|int,2048]|min }}"
+      - include_tasks:
+          file: task_verify_api_response.yml
+          apply:
+            vars:
+              ip: "{{ reg_highest_ip.stdout }}"
+              devid: "{{ device.id }}"
+              apis: "{{ device.apisecure }}"
+              aport: "{{ device.apiport }}"
+      when:
+        - device.api|default(false)|bool
+    when:
+      - reg_start is succeeded
+  vars:
+    max_heap: "{{ '64' if device.ssh|default(false)|bool else '32' }}"

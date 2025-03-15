@@ -1,0 +1,8 @@
+---
+# tasks to increase the maximum number of PID
+- name: increase max PID number
+  ansible.posix.sysctl:
+    name: kernel.pid_max
+    value: '4194304'
+    sysctl_set: true
+    reload: true

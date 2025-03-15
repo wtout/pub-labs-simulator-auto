@@ -1,0 +1,4 @@
+---
+# vars file for roles/devsim
+automation_reponame: 'pae-labs-simulator'
+first_dummy_interface_id: 101

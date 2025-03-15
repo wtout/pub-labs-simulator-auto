@@ -1,0 +1,21 @@
+---
+# tasks to enable SSH support
+- block:
+  - name: Add VM's IP to sshd_config
+    ansible.builtin.replace:
+      path: /etc/ssh/sshd_config
+      regexp: '^#(ListenAddress) 0\.0\.0\.0'
+      replace: '\g<1> {{ ansible_host }}'
+    notify: restart sshd service
+#  - include_tasks:
+#      file: task_manage_service.yml
+#      apply:
+#        vars:
+#          service: "{{ service_item }}"
+#          action: 'restarted'
+#          state: 'true'
+#    loop:
+#      - sshd
+#    loop_control:
+#      loop_var: service_item      
+  become: "{{ true if ansible_user != 'root' else false }}"

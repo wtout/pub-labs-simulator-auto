@@ -1,0 +1,5 @@
+---
+# tasks to delete dummy interface
+- name: delete dummy{{ int_id }} interface
+  ansible.builtin.command: ip link delete dummy{{ int_id }} type dummy
+  become: "{{ true if ansible_user != 'root' else false }}"

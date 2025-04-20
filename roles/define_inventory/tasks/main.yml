@@ -361,8 +361,8 @@
             that:
               - environment_definition.datacenter.secondary.resources == none
             fail_msg: "The resources list {{ environment_definition.datacenter.secondary.resources }} is not valid for a hosted deployment. Aborting!"
-            when:
-              - environment_definition.build.disaster_recovery
+          when:
+            - environment_definition.build.disaster_recovery
 
     - name: Check if host's IP address is private
       ansible.builtin.shell:

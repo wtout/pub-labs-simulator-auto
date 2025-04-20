@@ -1,64 +1,71 @@
 ---
 # tasks to stop device simulation
-- block:
-  - include_tasks: task_get_active_avmid.yml
-  - name: define avmid lists
-    ansible.builtin.set_fact:
-      good_avmid_list: "{{ active_avmid_list|map('int')|sort|map('string') }}"
-      bad_avmid_list: []
-    when: AVMLIST|default('') == ''
-  - name: define avmid lists
-    ansible.builtin.set_fact:
-      good_avmid_list: "{{ AVMLIST|split(',')|list | community.general.lists_intersect(active_avmid_list)|map('int')|sort|map('string') }}"
-      bad_avmid_list: "{{ AVMLIST|split(',')|list | community.general.lists_difference(active_avmid_list)|map('int')|sort|map('string') }}"
-    when: AVMLIST|default('') != ''
-  - include_tasks:
-      file: task_stop_avm.yml
-      apply:
-        vars:
-          avm_id: "{{ id_item }}"
-    loop: "{{ good_avmid_list|sort(reverse=True) }}"
-    loop_control:
-      loop_var: id_item
-    when: stop_devsim|default(false)|bool
-  - include_tasks:
-      file: task_delete_simdev_records.yml
-      apply:
-        vars:
-          avm_id: "{{ id_item }}"
-    loop: "{{ good_avmid_list|sort(reverse=True) }}"
-    loop_control:
-      loop_var: id_item
-    when: rollback_devsim|default(false)|bool or rollback_vms_iso|default(false)|bool
-  - block:
-    - include_tasks:
+- name: Get actvie AVM ID
+  ansible.builtin.include_tasks: task_get_active_avmid.yml
+- name: Define avmid lists
+  ansible.builtin.set_fact:
+    good_avmid_list: "{{ active_avmid_list | map('int') | sort | map('string') }}"
+    bad_avmid_list: []
+  when: AVMLIST | default('') == ''
+- name: Define avmid lists
+  ansible.builtin.set_fact:
+    good_avmid_list: "{{ AVMLIST | split(',') | list | community.general.lists_intersect(active_avmid_list) | map('int') | sort | map('string') }}"
+    bad_avmid_list: "{{ AVMLIST | split(',') | list | community.general.lists_difference(active_avmid_list) | map('int') | sort | map('string') }}"
+  when: AVMLIST | default('') != ''
+- name: Stop AVM
+  ansible.builtin.include_tasks:
+    file: task_stop_avm.yml
+    apply:
+      vars:
+        avm_id: "{{ id_item }}"
+  loop: "{{ good_avmid_list | sort(reverse=True) }}"
+  loop_control:
+    loop_var: id_item
+  when: stop_devsim | default(false) | bool
+- name: Delete simulated device records
+  ansible.builtin.include_tasks:
+    file: task_delete_simdev_records.yml
+    apply:
+      vars:
+        avm_id: "{{ id_item }}"
+  loop: "{{ good_avmid_list | sort(reverse=True) }}"
+  loop_control:
+    loop_var: id_item
+  when: rollback_devsim | default(false) | bool or rollback_vms_iso | default(false) | bool
+- name: Rollback devsim
+  when: rollback_devsim | default(false) | bool
+  block:
+    - name: Stop AVM
+      ansible.builtin.include_tasks:
         file: task_stop_avm.yml
         apply:
           vars:
             avm_id: "{{ id_item }}"
-      loop: "{{ good_avmid_list|sort(reverse=True) }}"
+      loop: "{{ good_avmid_list | sort(reverse=True) }}"
       loop_control:
         loop_var: id_item
-    - include_tasks:
+    - name: Delete AVM file
+      ansible.builtin.include_tasks:
         file: task_delete_avm_file.yml
         apply:
           vars:
             avm_id: "{{ id_item }}"
-      loop: "{{ good_avmid_list|sort(reverse=True) }}"
+      loop: "{{ good_avmid_list | sort(reverse=True) }}"
       loop_control:
         loop_var: id_item
-    - include_tasks:
+    - name: Delete dummy interface
+      ansible.builtin.include_tasks:
         file: task_delete_dummy_interface.yml
         apply:
           vars:
             int_id: "{{ id_item }}"
-      loop: "{{ good_avmid_list|sort(reverse=True) }}"
+      loop: "{{ good_avmid_list | sort(reverse=True) }}"
       loop_control:
         loop_var: id_item
-    when: rollback_devsim|default(false)|bool
-  - ansible.builtin.debug:
-      msg:
-        - 'The following AVM IDs do not correspond to active AVM files'
-        - "{{ bad_avmid_list|join(',') }}"
-    when:
-      - bad_avmid_list != []
+- name: Information message
+  ansible.builtin.debug:
+    msg:
+      - 'The following AVM IDs do not correspond to active AVM files'
+      - "{{ bad_avmid_list | join(',') }}"
+  when:
+    - bad_avmid_list != []

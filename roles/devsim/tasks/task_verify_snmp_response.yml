@@ -1,71 +1,84 @@
 ---
 # tasks to verify SNMP response
-- block:
-  - block:
-    - name: verify SNMP v2 response from device at {{ ip }}
-      community.general.snmp_facts:
-        host: "{{ ip }}"
-        version: v2c
-        community: "{{ comstr }}"
-      register: reg_snmpv2_response
-      failed_when:
-        - reg_snmpv2_response is failed
-        - reg_snmpv2_response.msg is search('No SNMP response received before timeout')
-      no_log: yes
-    - debug:
-        msg:
-          - "{{ devid }}: {{ reg_snmpv2_response.ansible_facts.ansible_sysdescr }}"
-      when:
-        - reg_snmpv2_response.ansible_facts is defined
-    rescue:
-    - debug:
-        msg:
-          - "{{ devid }}: {{ reg_snmpv2_response }}"
-    always:
-    - ansible.builtin.assert:
-        that: reg_snmpv2_response is succeeded
-    when: snmpv2|default(false)
-  - block:
-    - name: get the Linux distribution
-      ansible.builtin.setup:
-        filter:
-          - 'ansible_distribution'
-    - block:
-      - name: verify SNMP v3 response from device at {{ ip }}
-        community.general.snmp_facts:
-          host: "{{ ip }}"
-          version: v3
-          level: authPriv
-          integrity: "{{ authpr|lower }}"
-          privacy: "{{ encryption }}"
-          username: "{{ authusr }}"
-          authkey: "{{ authpas }}"
-          privkey: "{{ privpas }}"
-        register: reg_snmpv3_response
-        failed_when:
-          - reg_snmpv3_response is failed
-          - reg_snmpv3_response.msg is search('No SNMP response received before timeout')
-        no_log: yes
-      - debug:
-          msg:
-            - "{{ devid }}: {{ reg_snmpv3_response.ansible_facts.ansible_sysdescr }}"
-        when:
-          - reg_snmpv3_response.ansible_facts is defined
-      rescue:
-      - debug:
-          msg:
-            - "{{ devid }}: {{ reg_snmpv3_response }}"
-      always:
-      - ansible.builtin.assert:
-          that: reg_snmpv3_response is succeeded
-      when:
-        - (ansible_facts.distribution == 'AlmaLinux' and encryption == 'aes') or (ansible_facts.distribution == 'CentOS' and encryption == 'des')
-    - ansible.builtin.debug:
-        msg: "{{ devid + ': ' + 'Unable to send a SNMPv3 walk request with the current OS and Encryption/Privacy combination: ' + ansible_facts.distribution + ' + ' + encryption|upper }}"
-      when:
-        - (ansible_facts.distribution == 'AlmaLinux' and encryption != 'aes') or (ansible_facts.distribution == 'CentOS' and encryption != 'des')
-    when:
-      - snmpv3|default(false)
-    vars:
-      encryption: "{{ privpr|lower|regex_replace('[0-9]*','') }}"
+- name: Verify SNMP response
   delegate_to: localhost
+  block:
+    - name: Verifying SNMP v2 response
+      when: snmpv2 | default(false)
+      block:
+        - name: Verify SNMP v2 response from device at {{ ip }}
+          community.general.snmp_facts:
+            host: "{{ ip }}"
+            version: v2c
+            community: "{{ comstr }}"
+          register: reg_snmpv2_response
+          failed_when:
+            - reg_snmpv2_response is failed
+            - reg_snmpv2_response.msg is search('No SNMP response received before timeout')
+          no_log: true
+        - name: Debug message
+          ansible.builtin.debug:
+            msg:
+              - "{{ devid }}: {{ reg_snmpv2_response.ansible_facts.ansible_sysdescr }}"
+          when:
+            - reg_snmpv2_response.ansible_facts is defined
+      rescue:
+        - name: Debug message
+          ansible.builtin.debug:
+            msg:
+              - "{{ devid }}: {{ reg_snmpv2_response }}"
+      always:
+        - name: Assert SNMP v2 response succeeded
+          ansible.builtin.assert:
+            that: reg_snmpv2_response is succeeded
+    - name: Verifying SNMP v3 response
+      when:
+        - snmpv3 | default(false)
+      vars:
+        encryption: "{{ privpr | lower | regex_replace('[0-9]*', '') }}"
+      block:
+        - name: Get the Linux distribution
+          ansible.builtin.setup:
+            filter:
+              - 'ansible_distribution'
+        - name: Verify SNMP v3 response
+          when:
+            - (ansible_facts.distribution == 'AlmaLinux' and encryption == 'aes') or (ansible_facts.distribution == 'CentOS' and encryption == 'des')
+          block:
+            - name: Verify SNMP v3 response from device at {{ ip }}
+              community.general.snmp_facts:
+                host: "{{ ip }}"
+                version: v3
+                level: authPriv
+                integrity: "{{ authpr | lower }}"
+                privacy: "{{ encryption }}"
+                username: "{{ authusr }}"
+                authkey: "{{ authpas }}"
+                privkey: "{{ privpas }}"
+              register: reg_snmpv3_response
+              failed_when:
+                - reg_snmpv3_response is failed
+                - reg_snmpv3_response.msg is search('No SNMP response received before timeout')
+              no_log: true
+            - name: Debug message
+              ansible.builtin.debug:
+                msg:
+                  - "{{ devid }}: {{ reg_snmpv3_response.ansible_facts.ansible_sysdescr }}"
+              when:
+                - reg_snmpv3_response.ansible_facts is defined
+          rescue:
+            - name: Debug message
+              ansible.builtin.debug:
+                msg:
+                  - "{{ devid }}: {{ reg_snmpv3_response }}"
+          always:
+            - name: Assert SNMP v3 response succeeded
+              ansible.builtin.assert:
+                that: reg_snmpv3_response is succeeded
+        - name: Debug message
+          ansible.builtin.debug:
+            msg: "{{ devid + ': ' + msg_text + ansible_facts.distribution + ' + ' + encryption | upper }}"
+          when:
+            - (ansible_facts.distribution == 'AlmaLinux' and encryption != 'aes') or (ansible_facts.distribution == 'CentOS' and encryption != 'des')
+          vars:
+            msg_text: 'Unable to send a SNMPv3 walk request with the current OS and Encryption/Privacy combination: '

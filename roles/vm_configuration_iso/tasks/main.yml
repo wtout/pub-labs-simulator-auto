@@ -1,43 +1,43 @@
 ---
 # tasks file for vm_configuration
-- block:
-  - name: check original credentials
-    block:
-      - name: check VM credentials
-        ansible.builtin.wait_for_connection:
-          timeout: 3
-        register: vco_vm_creds
-        check_mode: no
-    rescue:
-      - name: define creds_status
-        ansible.builtin.set_fact:
-          creds_status: 'The VM IP address is invalid'
-        when:
-          - vco_vm_creds.msg is search('Failed to connect to the host via ssh')
-      - block:
-        - name: check service account credentials
+- name: Main vm_configuration block
+  when: configure_vms_iso | default(false) | bool
+  tags: vm_configuration
+  block:
+    - name: Check original credentials
+      block:
+        - name: Check VM credentials
+          ansible.builtin.wait_for_connection:
+            timeout: 3
+          register: vco_vm_creds
+          check_mode: false
+      rescue:
+        - name: Define creds_status
+          ansible.builtin.set_fact:
+            creds_status: 'The VM IP address is invalid'
+          when:
+            - vco_vm_creds.msg is search('Failed to connect to the host via ssh')
+        - name: Check service account credentials
+          when: vco_vm_creds.msg is search('Invalid/incorrect')
           block:
-            - name: Switch to {{ vm_admin_user }} user
+            - name: Switch to {{ vm_admin_user + ' user' }}
               ansible.builtin.set_fact:
                 ansible_user: "{{ vm_admin_user }}"
                 ansible_ssh_pass: "{{ vm_admin_pass }}"
                 ansible_become_pass: "{{ vm_admin_pass }}"
               no_log: true
-            - name: check updated VM credentials
+            - name: Check updated VM credentials
               ansible.builtin.wait_for_connection:
                 timeout: 3
-              check_mode: no
+              check_mode: false
           rescue:
-            - name: define creds_status
+            - name: Define creds_status
               ansible.builtin.set_fact:
                 creds_status: 'The VM credentials are invalid'
-        when:
-          - vco_vm_creds.msg is search('Invalid/incorrect')
-  - ansible.builtin.assert:
-      that:
-        - creds_status | default('') is not search('invalid')
-      fail_msg: "{{ creds_status | default('') }}"
-
-  - include_tasks: task_configure_vms.yml
-  when: configure_vms_iso | default(false) | bool
-  tags: vm_configuration
+    - name: Assert that credentials are not invalid
+      ansible.builtin.assert:
+        that:
+          - creds_status | default('') is not search('invalid')
+        fail_msg: "{{ creds_status | default('') }}"
+    - name: Configure VMs
+      ansible.builtin.include_tasks: task_configure_vms.yml

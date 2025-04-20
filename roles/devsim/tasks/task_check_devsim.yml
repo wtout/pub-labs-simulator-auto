@@ -1,13 +1,16 @@
 ---
 # tasks to check simulation status
-- block:
-  - include_tasks: task_get_active_avmid.yml
-  - include_tasks: task_get_file_avmid.yml
-  - name: define non_active_avmid_list
-    ansible.builtin.set_fact:
-      non_active_avmid_list: "{{ file_avmid_list | community.general.lists_difference(active_avmid_list) }}"
-  - block:
-    - name: initialize device info lists
+- name: Get active AVM ID
+  ansible.builtin.include_tasks: task_get_active_avmid.yml
+- name: Get file AVM ID
+  ansible.builtin.include_tasks: task_get_file_avmid.yml
+- name: Define non_active_avmid_list
+  ansible.builtin.set_fact:
+    non_active_avmid_list: "{{ file_avmid_list | community.general.lists_difference(active_avmid_list) }}"
+- name: Define non active ID and IP
+  when: non_active_avmid_list != []
+  block:
+    - name: Initialize device info lists
       ansible.builtin.set_fact:
         read_avmid_list: []
         read_device_list: []
@@ -30,7 +33,8 @@
         read_apiport_list: []
         read_apiusername_list: []
         read_apipassword_list: []
-    - include_tasks:
+    - name: Get device info
+      ansible.builtin.include_tasks:
         file: task_get_device_info.yml
         apply:
           vars:
@@ -38,74 +42,88 @@
       loop: "{{ non_active_avmid_list }}"
       loop_control:
         loop_var: id_item
-    - name: define non_active_id_ip
+    - name: Define non_active_id_ip
       ansible.builtin.set_fact:
-        non_active_id_ip: "{{ non_active_id_ip|default([]) + [(['%-17s'|format(task_item.0)] + ['%-21s'|format(task_item.1|first)] + ['%-16s'|format(task_item.1|last)])|join(' || ')] }}"
-      loop: "{{ read_avmid_list|zip(read_device_list|zip(read_ip_list)) }}"
+        non_active_id_ip: "{{ non_active_id_ip | default([]) + \
+          [(['%-17s' | format(task_item.0)] + ['%-21s' | format(task_item.1 | first)] + ['%-16s' | format(task_item.1 | last)]) | join(' || ')] }}"
+      loop: "{{ read_avmid_list | zip(read_device_list | zip(read_ip_list)) }}"
       loop_control:
         loop_var: task_item
-        label: "{{ task_item|flatten }}"
-    when: non_active_avmid_list != []
+        label: "{{ task_item | flatten }}"
 
-  - name: initialize device info lists
-    ansible.builtin.set_fact:
-      read_avmid_list: []
-      read_device_list: []
-      read_ip_list: []
-      read_snmp_list: []
-      read_ssh_list: []
-      read_netconf_list: []
-      read_api_list: []
-      read_username_list: []
-      read_password_list: []
-      read_snmpv3_list: []
-      read_snmpv3username_list: []
-      read_snmpv3authpassword_list: []
-      read_snmpv3authprotocol_list: []
-      read_snmpv3privpassword_list: []
-      read_snmpv3privprotocol_list: []
-      read_snmpv2_list: []
-      read_snmpv2_community_list: []
-      read_apisecure_list: []
-      read_apiport_list: []
-      read_apiusername_list: []
-      read_apipassword_list: []
-  - include_tasks:
-      file: task_get_device_info.yml
-      apply:
-        vars:
-          avm_id: "{{ id_item }}"
-    loop: "{{ active_avmid_list }}"
-    loop_control:
-      loop_var: id_item
-  - name: define active_dev_info
-    ansible.builtin.set_fact:
-      active_dev_info: "{{ active_dev_info|default(['Product,Address,SNMPv2,SNMPv3,SSH,NetConf,API,AVM,Username,Password,SNMPv2 Community,SNMPv3 Username,SNMPv3 AuthProtocol,SNMPv3 AuthPassword,SNMPv3 PrivProtocol,SNMPv3 PrivPassword,Secure API,API Port,API Username,API Password']) + [([task_item.0] + task_item.1|flatten)|join(',')] }}"
-    loop: "{{ mylists }}"
-    loop_control:
-      loop_var: task_item
-      label: "{{ task_item|flatten }}"
-    vars:
-      mylists: "{{ read_device_list|zip(read_ip_list|zip(read_snmpv2_list|zip(read_snmpv3_list|zip(read_ssh_list|zip(read_netconf_list|zip(read_api_list|zip(read_avmid_list|zip(read_username_list|zip(read_password_list|zip(read_snmpv2_community_list|zip(read_snmpv3username_list|zip(read_snmpv3authprotocol_list|zip(read_snmpv3authpassword_list|zip(read_snmpv3privprotocol_list|zip(read_snmpv3privpassword_list|zip(read_apisecure_list|zip(read_apiport_list|zip(read_apiusername_list|zip(read_apipassword_list))))))))))))))))))) }}"
-  - name: write active device info to file
-    ansible.builtin.copy:
-      content: "{{ active_dev_info|join('\n')|replace('True','yes')|replace('False','no') }}"
-      dest: "{{ auto_dir }}/{{ vm.name }}_active_simulated_devices.csv"
-    delegate_to: localhost
-    become: "{{ 'yes' if host_os is search('Alma') else 'no' }}"
-    when: active_dev_info|default([]) != []
-  - name: define active_id_ip
-    ansible.builtin.set_fact:
-      active_id_ip: "{{ active_id_ip|default([]) + [(['%-17s'|format(task_item.0)] + ['%-21s'|format(task_item.1|first)] + ['%-16s'|format(task_item.1|last)])|join(' || ')] }}"
-    loop: "{{ read_avmid_list|zip(read_device_list|zip(read_ip_list)) }}"
-    loop_control:
-      loop_var: task_item
-      label: "{{ task_item|flatten }}"
-  - ansible.builtin.debug:
-      msg:
-        - "{{ ['%-17s'|format('Non-Active AVM ID') + ' || ' + '%-21s'|format('Non-Active Device ID') + ' || ' + '%-21s'|format('Non-Active Device IP')] + non_active_id_ip|default([]) }}"
-        - "{{ ['%-17s'|format('Active AVM ID') + ' || ' + '%-21s'|format('Active Device ID') + ' || ' + '%-21s'|format('Active Device IP')] + active_id_ip|default([]) }}"
-    when: non_active_avmid_list != []
-  - ansible.builtin.debug:
-      msg: "{{ ['%-17s'|format('Active AVM ID') + ' || ' + '%-21s'|format('Active Device ID') + ' || ' + '%-21s'|format('Active Device IP')] + active_id_ip|default([]) }}"
-    when: non_active_avmid_list == []
+- name: Initialize device info lists
+  ansible.builtin.set_fact:
+    read_avmid_list: []
+    read_device_list: []
+    read_ip_list: []
+    read_snmp_list: []
+    read_ssh_list: []
+    read_netconf_list: []
+    read_api_list: []
+    read_username_list: []
+    read_password_list: []
+    read_snmpv3_list: []
+    read_snmpv3username_list: []
+    read_snmpv3authpassword_list: []
+    read_snmpv3authprotocol_list: []
+    read_snmpv3privpassword_list: []
+    read_snmpv3privprotocol_list: []
+    read_snmpv2_list: []
+    read_snmpv2_community_list: []
+    read_apisecure_list: []
+    read_apiport_list: []
+    read_apiusername_list: []
+    read_apipassword_list: []
+- name: Get device info
+  ansible.builtin.include_tasks:
+    file: task_get_device_info.yml
+    apply:
+      vars:
+        avm_id: "{{ id_item }}"
+  loop: "{{ active_avmid_list }}"
+  loop_control:
+    loop_var: id_item
+- name: Define active_dev_info
+  ansible.builtin.set_fact:
+    active_dev_info: "{{ active_dev_info | default(['Product,Address,SNMPv2,SNMPv3,SSH,NetConf,API,AVM,Username,Password,SNMPv2 Community,SNMPv3 Username,\
+      SNMPv3 AuthProtocol,SNMPv3 AuthPassword,SNMPv3 PrivProtocol,SNMPv3 PrivPassword,Secure API,API Port,API Username,API Password']) + \
+      [([task_item.0] + task_item.1 | flatten) | join(',')] }}"
+  loop: "{{ mylists }}"
+  loop_control:
+    loop_var: task_item
+    label: "{{ task_item | flatten }}"
+  vars:
+    mylists: "{{ read_device_list | zip(read_ip_list | zip(read_snmpv2_list | zip(read_snmpv3_list | zip(read_ssh_list | zip(read_netconf_list | \
+      zip(read_api_list | zip(read_avmid_list | zip(read_username_list | zip(read_password_list | zip(read_snmpv2_community_list | \
+      zip(read_snmpv3username_list | zip(read_snmpv3authprotocol_list | zip(read_snmpv3authpassword_list | zip(read_snmpv3privprotocol_list | \
+      zip(read_snmpv3privpassword_list | zip(read_apisecure_list | zip(read_apiport_list | zip(read_apiusername_list | \
+      zip(read_apipassword_list))))))))))))))))))) }}"
+- name: Write active device info to file
+  ansible.builtin.copy:
+    content: "{{ active_dev_info | join('\n') | replace('True', 'yes') | replace('False', 'no') }}"
+    dest: "{{ auto_dir }}/{{ vm.name }}_active_simulated_devices.csv"
+    mode: '644'
+  delegate_to: localhost
+  become: "{{ true if host_os is search('Alma') else false }}"
+  when: active_dev_info | default([]) != []
+- name: Define active_id_ip
+  ansible.builtin.set_fact:
+    active_id_ip: "{{ active_id_ip | default([]) + \
+      [(['%-17s' | format(task_item.0)] + ['%-21s' | format(task_item.1 | first)] + ['%-16s' | format(task_item.1 | last)]) | join(' || ')] }}"
+  loop: "{{ read_avmid_list | zip(read_device_list | zip(read_ip_list)) }}"
+  loop_control:
+    loop_var: task_item
+    label: "{{ task_item | flatten }}"
+- name: Information message
+  ansible.builtin.debug:
+    msg:
+      - "{{ ['%-17s' | format('Non-Active AVM ID') + ' || ' + '%-21s' | format('Non-Active Device ID') + ' || ' + \
+        '%-21s' | format('Non-Active Device IP')] + non_active_id_ip | default([]) }}"
+      - "{{ ['%-17s' | format('Active AVM ID') + ' || ' + '%-21s' | format('Active Device ID') + ' || ' + \
+        '%-21s' | format('Active Device IP')] + active_id_ip | default([]) }}"
+  when: non_active_avmid_list != []
+- name: Information message
+  ansible.builtin.debug:
+    msg: "{{ ['%-17s' | format('Active AVM ID') + ' || ' + '%-21s' | format('Active Device ID') + ' || ' + \
+      '%-21s' | format('Active Device IP')] + active_id_ip | default([]) }}"
+  when: non_active_avmid_list == []

@@ -5,5 +5,5 @@ automation_reponame: 'pae-labs-simulator'
 chrony_file: '/etc/chrony.conf'
 syslog_path: '/var/log'
 sys_msgs: "{{ syslog_path }}/messages"
-LOCAL_SSH_DIR: "~/.ssh"
-SSH_KEY_FILE: "id_rsa"
+local_ssh_dir: "~/.ssh"
+ssh_key_file: "id_rsa"

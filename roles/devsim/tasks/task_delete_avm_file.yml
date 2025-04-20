@@ -1,6 +1,6 @@
 ---
 # tasks to delete AVM file
-- name: delete avm{{ avm_id }}.xml
+- name: Delete avm{{ avm_id + '.xml' }}
   ansible.builtin.file:
     path: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avm_id }}.xml"
     state: absent

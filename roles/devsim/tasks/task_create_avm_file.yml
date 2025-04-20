@@ -1,10 +1,10 @@
 ---
 # Tasks to create the avm file
-- name: Create avm{{ avm_id }}.xml file
+- name: Create avm{{ avm_id + '.xml file' }}
   ansible.builtin.template:
     src: templates/avm.xml.tmpl
     dest: "/opt/{{ automation_reponame }}/simulator/registry/avm{{ avm_id }}.xml"
     owner: root
     group: root
-    mode: 0644
+    mode: '644'
   become: "{{ true if ansible_user != 'root' else false }}"

@@ -1,11 +1,15 @@
 ---
 # tasks to stop AVM simulation
-- block:
-  - name: stop AVM {{ avm_id }}
-    ansible.builtin.shell:
-      kill -9 $(ps -ef | grep "AVM -a {{ avm_id }}" | grep -v grep | awk '{print $2}')
-    register: reg_stop
-    become: "{{ true if ansible_user != 'root' else false }}"
+- name: Stop AVM
+  block:
+    - name: Stop AVM {{ avm_id }}
+      ansible.builtin.shell:
+        cmd: set -o pipefail && kill -9 $(ps -ef | grep "AVM -a {{ avm_id }}" | grep -v grep | awk '{print $2}')
+        executable: /bin/bash
+      register: reg_stop
+      changed_when: reg_stop.rc == 0
+      become: "{{ true if ansible_user != 'root' else false }}"
   rescue:
-  - ansible.builtin.debug:
-      msg: "{{ reg_stop }}"
+    - name: Debug message
+      ansible.builtin.debug:
+        msg: "{{ reg_stop }}"

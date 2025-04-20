@@ -1,16 +1,16 @@
 ---
 # Tasks file to stop services
-- block:
-  - include_tasks:
-      file: task_manage_service.yml
-      apply:
-        vars:
-          service: "{{ service_item }}"
-          action: 'stopped'
-          state: 'false'
-    when: service_item != ''
-    loop:
-      - firewalld
-      - "{{ 'iptables' if build.version.os_iso|lower is search('centos') else '' }}"
-    loop_control:
-      loop_var: service_item
+- name: Manage service
+  ansible.builtin.include_tasks:
+    file: task_manage_service.yml
+    apply:
+      vars:
+        service: "{{ service_item }}"
+        action: 'stopped'
+        state: 'false'
+  when: service_item != ''
+  loop:
+    - firewalld
+    - "{{ 'iptables' if build.version.os_iso | lower is search('centos') else '' }}"
+  loop_control:
+    loop_var: service_item

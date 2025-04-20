@@ -7,7 +7,7 @@
   block:
     - name: Define first_available_ip
       ansible.builtin.set_fact:
-        first_available_ip: "{{ host_network | ansible.utils.ipaddr('next_usable') }}"
+        first_available_ip: "{{ host_network | ansible.utils.ipaddr('next_usable') }}" # noqa: jinja[invalid]
       when: active_avmid_list == [] or avm_id | int == first_dummy_interface_id
     - name: Defining first avaiable IP
       when:

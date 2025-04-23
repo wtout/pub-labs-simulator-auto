@@ -1,8 +1,8 @@
 ---
 # tasks to validate vcenter credentials
-- name: Block to validate vcenter credentials
+- name: Validating vcenter credentials
   block:
-    - name: Validate vcenter credentials
+    - name: Validate {{ ('secondary' if vcenter_host is search('dr') else 'primary') + ' vcenter credentials' }}
       community.vmware.vmware_about_info:
         hostname: "{{ hostvars[vcenter_host]['information']['address'] }}"
         username: "{{ hostvars[vcenter_host]['credentials']['username'] }}"

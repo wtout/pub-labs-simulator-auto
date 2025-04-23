@@ -2,6 +2,8 @@
 # tasks to deploy VM from ISO
 - name: Deploying VM from ISO self healing
   delegate_to: localhost
+  vars:
+    mydc: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datacenter'] }}"
   block:
     - name: Get VM info
       community.vmware.vmware_guest_info:
@@ -9,8 +11,7 @@
         username: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['username'] }}"
         password: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['password'] }}"
         datacenter: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datacenter'] }}"
-        folder: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datacenter'] + '/vm' + \
-          (('' if fldr_name is regex('^/') else '/') + fldr_name if fldr_name != '' else '') }}"
+        folder: "{{ mydc + '/vm' + (('' if fldr_name is regex('^/') else '/') + fldr_name if fldr_name != '' else '') }}"
         name: "{{ vm.name }}"
         validate_certs: false
       check_mode: false

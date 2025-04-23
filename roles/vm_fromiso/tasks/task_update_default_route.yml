@@ -1,19 +1,20 @@
 ---
 # Tasks to configure the default route on the VM
-- name: Update default route
+- name: Configure default route
   when:
     - netconfig.nic1.gateway == ''
     - netconfig.nic1.ipaddress != ''
     - netconfig.nic2.ipaddress != ''
   delegate_to: localhost
+  vars:
+    mydc: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datacenter'] }}"
   block:
     - name: Wait on VMware Tools to become available
       community.vmware.vmware_guest_tools_wait:
         hostname: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['address'] }}"
         username: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['username'] }}"
         password: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['password'] }}"
-        folder: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datacenter'] + '/vm' + \
-          (('' if fldr_name is regex('^/') else '/') + fldr_name if fldr_name != '' else '') }}"
+        folder: "{{ mydc + '/vm' + (('' if fldr_name is regex('^/') else '/') + fldr_name if fldr_name != '' else '') }}"
         validate_certs: false
         name: "{{ vm.name }}"
     - name: Render default route file locally
@@ -27,8 +28,7 @@
         username: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['username'] }}"
         password: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['password'] }}"
         datacenter: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datacenter'] }}"
-        folder: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datacenter'] + '/vm' + \
-          (('' if fldr_name is regex('^/') else '/') + fldr_name if fldr_name != '' else '') }}"
+        folder: "{{ mydc + '/vm' + (('' if fldr_name is regex('^/') else '/') + fldr_name if fldr_name != '' else '') }}"
         validate_certs: false
         vm_id: "{{ vm.name }}"
         vm_username: "{{ ansible_user }}"
@@ -49,8 +49,7 @@
         username: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['username'] }}"
         password: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['credentials']['password'] }}"
         datacenter: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datacenter'] }}"
-        folder: "{{ hostvars[groups[('dr' if 'dr' in group_names else '') + 'vcenter'][0]]['information']['datacenter'] + '/vm' + \
-          (('' if fldr_name is regex('^/') else '/') + fldr_name if fldr_name != '' else '') }}"
+        folder: "{{ mydc + '/vm' + (('' if fldr_name is regex('^/') else '/') + fldr_name if fldr_name != '' else '') }}"
         validate_certs: false
         vm_id: "{{ vm.name }}"
         vm_username: "{{ ansible_user }}"

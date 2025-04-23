@@ -92,8 +92,8 @@
       loop:
         - { 'name': 'primary.number_of_lnxvm', 'max_value': 3, 'state': "{{ 'active' if \
           ansible_play_hosts | reject('search', 'dr') | list | length >= 1 else 'disabled' }}" }
-        - { 'name': 'secondary.number_of_lnxvm', 'max_value': "{{ 3 if environment_definition.build.disaster_recovery else 0 }}", 'state': "{{ 'active' \
-          if environment_definition.build.disaster_recovery else 'disabled' }}" }
+        - { 'name': 'secondary.number_of_lnxvm', 'max_value': "{{ 3 if environment_definition.build.disaster_recovery else 0 }}", 'state': "{{ 'active' if \
+          environment_definition.build.disaster_recovery else 'disabled' }}" }
       loop_control:
         loop_var: loop_item
         label: "{{ 'number_of_' + loop_item.name }}"
@@ -111,10 +111,10 @@
       vars:
         parval: "{{ environment_definition['build'][loop_item.name | split('.') | first][loop_item.name | split('.') | last] }}"
       loop:
-        - { 'name': 'primary.number_of_lnxvm', 'max_value': 3, 'state': "{{ 'active' \
-          if ansible_play_hosts | reject('search', 'dr') | length >= 1 else 'disabled' }}" }
-        - { 'name': 'secondary.number_of_lnxvm', 'max_value': "{{ 3 if environment_definition.build.disaster_recovery else 0 }}", 'state': "{{ 'active' \
-          if environment_definition.build.disaster_recovery else 'disabled' }}" }
+        - { 'name': 'primary.number_of_lnxvm', 'max_value': 3, 'state': "{{ 'active' if \
+          ansible_play_hosts | reject('search', 'dr') | list | length >= 1 else 'disabled' }}" }
+        - { 'name': 'secondary.number_of_lnxvm', 'max_value': "{{ 3 if environment_definition.build.disaster_recovery else 0 }}", 'state': "{{ 'active' if \
+          environment_definition.build.disaster_recovery else 'disabled' }}" }
       loop_control:
         loop_var: loop_item
         label: "{{ 'number_of_' + loop_item.name }}"

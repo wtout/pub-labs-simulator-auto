@@ -1,0 +1,36 @@
+---
+# tasks to create DNS records for simulated device and generate list of hosts file entries
+- block:
+  - block:
+    - name: create hosts_addendum file
+      ansible.builtin.file:
+        path: "{{ auto_dir }}/{{ vm.name + '_hosts_addendum' }}"
+        state: touch
+    - name: write to hosts_addendum file
+      ansible.builtin.lineinfile:
+        path: "{{ auto_dir }}/{{ vm.name + '_hosts_addendum' }}"
+        line: "{{ '%-15s'|format(myipaddress) }}\t{{ '%-30s'|format(myrecord)|string }}\t{{ '%-40s'|format(myrecord|string + '.' + mydomain) }}"
+      loop: "{{ range(0,device.num|int)|list  }}"
+      loop_control:
+        loop_var: loop_item
+      vars:
+        myipaddress: "{{ first_available_ip|ansible.utils.ipmath(ipincr|int + loop_item|int) }}"
+        myrecord: "{{ myipaddress.split('.')[:2]|join('-') + '-' + device.id + '-' + '%02d'|format(ipincr|int + loop_item|int + 1) }}"
+        mydomain: "{{ hostvars[inventory_hostname]['sysconfig']['secondary' if 'dr' in group_names else 'primary']['domain_name'] }}"
+    become: "{{ 'yes' if host_os is search('Alma') else 'no' }}"
+  - include_role:
+      name: infra_dns_records
+      tasks_from: task_create_forward_record.yml
+      apply:
+        vars:
+          myserver: "{{ hostvars[inventory_hostname]['sysconfig']['secondary' if 'dr' in group_names else 'primary']['dns_servers'][0] }}"
+          myipaddress: "{{ first_available_ip|ansible.utils.ipmath(ipincr|int + loop_item|int) }}"
+          myrecord: "{{ myipaddress.split('.')[:2]|join('-') + '-' + device.id + '-' + '%02d'|format(ipincr|int + loop_item|int + 1)|string }}"
+          mydomain: "{{ hostvars[inventory_hostname]['sysconfig']['secondary' if 'dr' in group_names else 'primary']['domain_name'] }}"
+          mydesignation: "simulated device {{ myrecord }}"
+    loop: "{{ range(0,device.num|int)|list  }}"
+    loop_control:
+      loop_var: loop_item
+  vars:
+    ipincr: "{{ '2' if (first_available_ip|ansible.utils.ipmath(loop_item)).split('.')|last == '254' else '1' if (first_available_ip|ansible.utils.ipmath(loop_item)).split('.')|last == '255' else '0' }}"
+  delegate_to: localhost

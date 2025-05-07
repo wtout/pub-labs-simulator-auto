@@ -1,0 +1,55 @@
+---
+# Tasks to copy the simulator packages
+- block:
+  - name: fix the Centos7 yum issue (due to EOL)
+    ansible.builtin.shell: |
+      sed -i -e 's/mirrorlist=/#mirrorlist=/g' /etc/yum.repos.d/CentOS-*
+      sed -i -e 's/mirrorlist=/#mirrorlist=/g' /etc/yum.conf
+      sed -E -i -e 's/#baseurl=http:\/\/mirror.centos.org\/centos\/\$releasever\/([[:alnum:]_-]*)\/\$basearch\//baseurl=https:\/\/vault.centos.org\/{{ centos_string }}\/\1\/\$basearch\//g' /etc/yum.repos.d/CentOS-*
+      sed -E -i -e 's/#baseurl=http:\/\/mirror.centos.org\/centos\/\$releasever\/([[:alnum:]_-]*)\/\$basearch\//baseurl=https:\/\/vault.centos.org\/{{ centos_string }}\/\1\/\$basearch\//g' /etc/yum.conf
+    vars:
+      centos_string: "{{ '7.7.1908' if build.version.os_iso is search('1908') else '7.9.2009' if build.version.os_iso is search('2009') else '' }}"
+  - name: Install git
+    ansible.builtin.yum:
+      name: 'git'
+      state: installed
+  - name: clone the repos
+    git:
+      repo: "{{ repo_item.name | regex_replace('//', '//' + repo_creds + '@') }}"
+      dest: "/opt/{{ repo_item.name | basename | replace('.git','') }}"
+      version: "{{ repo_item.release }}"
+      force: yes
+    loop:
+      - { name: "{{ automation_site }}/{{ automation_reponame }}.git", release: 'HEAD' }
+    loop_control:
+      loop_var: repo_item
+    register: reg_clone_repos1
+    ignore_errors: yes
+    async: 200
+    poll: 10
+  - name: clone the repos
+    git:
+      repo: "{{ repo_item.name | regex_replace('//', '//' + repo_creds + '@') }}"
+      dest: "/opt/{{ repo_item.name | basename | replace('.git','') }}"
+      version: "{{ repo_item.release }}"
+      force: yes
+    loop:
+      - { name: "{{ automation_site }}/{{ automation_reponame }}.git", release: 'HEAD' }
+    loop_control:
+      loop_var: repo_item
+    register: reg_clone_repos2
+    async: 200
+    poll: 10
+    when: reg_clone_repos1 is failed
+  - name: define clone_repos
+    ansible.builtin.set_fact:
+      clone_repos: "{{ reg_clone_repos1 if reg_clone_repos1 is succeeded else reg_clone_repos2 }}"
+  - name: ensure log directory exists
+    ansible.builtin.file:
+      path: "/opt/{{ automation_reponame }}/simulator/log"
+      state: directory
+  - name: ensure Simulator.log file exists
+    ansible.builtin.file:
+      path: "/opt/{{ automation_reponame }}/simulator/log/Simulator.log"
+      state: touch
+  become: "{{ true if ansible_user != 'root' else false }}"

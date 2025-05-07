@@ -1,0 +1,7 @@
+---
+# tasks to increase the number of file descriptor per process
+- name: increase open files max number per process
+  ansible.builtin.lineinfile:
+    path: /etc/security/limits.conf
+    line: 'root            hard    nofile          8192'
+  notify: reboot vm

@@ -1,0 +1,35 @@
+---
+# tasks to verify a device info
+- block:
+  - ansible.builtin.set_fact:
+      devinfo_status: "{{ devinfo_status|default([]) + [device.id + ': SNMPv2 community string must be identical to SSH user name'] }}"
+    when:
+      - device.snmpv2
+      - device.community != ''
+      - device.ssh
+      - device.community != device.username
+  - ansible.builtin.set_fact:
+      devinfo_status: "{{ devinfo_status|default([]) + [device.id + ': SNMPv3 authUsername must be identical to SSH user name'] }}"
+    when:
+      - device.snmpv3
+      - device.ssh
+      - device.v3authusername != device.username
+  - ansible.builtin.set_fact:
+      devinfo_status: "{{ devinfo_status|default([]) + [device.id + ': API user name must be identical to SSH user name'] }}"
+    when:
+      - device.ssh
+      - device.api
+      - device.username != device.apiusername
+  - ansible.builtin.set_fact:
+      devinfo_status: "{{ devinfo_status|default([]) + [device.id + ': SNMPv2 community string must be identical to API user name'] }}"
+    when:
+      - device.snmpv2
+      - device.community != ''
+      - device.api
+      - device.community != device.apiusername
+  - ansible.builtin.set_fact:
+      devinfo_status: "{{ devinfo_status|default([]) + [device.id + ': SNMPv3 authUsername must be identical to API user name'] }}"
+    when:
+      - device.snmpv3
+      - device.api
+      - device.v3authusername != device.apiusername

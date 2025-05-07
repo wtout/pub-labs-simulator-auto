@@ -1,0 +1,24 @@
+---
+# tasks to get the list of active AVM IDs
+- block:
+  - name: find active AVM file IDs
+    ansible.builtin.shell:
+      ps -ef | grep AVM | grep -v grep | awk '{print $18}'
+    register: reg_active
+    check_mode: no
+  - name: define active_avmid_list
+    ansible.builtin.set_fact:
+      active_avmid_list: "{{ reg_active.stdout_lines|map('int')|sort|map('string') }}"
+  rescue:
+  - name: reboot the VM
+    ansible.builtin.reboot:
+    when: reg_active.stderr is search('Cannot allocate memory')
+    become: "{{ true if ansible_user != 'root' else false }}"
+  - name: find active AVM file IDs
+    ansible.builtin.shell:
+      ps -ef | grep AVM | grep -v grep | awk '{print $18}'
+    register: reg_active
+    check_mode: no
+  - name: define active_avmid_list
+    ansible.builtin.set_fact:
+      active_avmid_list: "{{ reg_active.stdout_lines|map('int')|sort|map('string') }}"

@@ -1,0 +1,9 @@
+---
+# vars file for vm_configuration
+automation_site: 'https://wwwin-github.cisco.com/cms-pae'
+automation_reponame: 'pae-labs-simulator'
+chrony_file: '/etc/chrony.conf'
+syslog_path: '/var/log'
+sys_msgs: "{{ syslog_path }}/messages"
+LOCAL_SSH_DIR: "~/.ssh"
+SSH_KEY_FILE: "id_rsa"

@@ -1,0 +1,25 @@
+---
+# tasks to ssh key from known_hosts file
+- block:
+  - name: define home_dir
+    ansible.builtin.set_fact:
+      home_dir: "{{ lookup('env', 'HOME') }}"
+  - name: check if known hosts file exists
+    ansible.builtin.stat:
+      path: "{{ home_dir }}/.ssh/known_hosts"
+    become: "{{ 'yes' if host_os|lower is search('almalinux|ubuntu') else 'no' }}"
+  - name: delete ssh key
+    ansible.builtin.lineinfile:
+      path: "{{ home_dir }}/.ssh/known_hosts"
+      regex: '^{{ regex_item }}.*$'
+      state: absent
+    loop:
+      - "{{ ansible_host }}"
+      - "{{ ip_pattern }}"
+    loop_control:
+      loop_var: regex_item
+    become: "{{ 'yes' if host_os|lower is search('almalinux|ubuntu') else 'no' }}"
+  vars:
+    host_network: "{{ hostvars[inventory_hostname]['build']['secondary' if 'dr' in group_names else 'primary']['networks'][inventory_hostname[-2:]|int -1] }}"
+    ip_pattern: "{{ (host_network|split('/')|first|split('.'))[:2]|join('.') }}"
+  delegate_to: localhost

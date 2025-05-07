@@ -1,0 +1,8 @@
+---
+# tasks file to configure_vms
+- block:
+  - include_tasks: task_get_repo_creds.yml
+  - include_tasks: task_get_simulator.yml
+  - include_tasks: task_stop_services.yml
+  - include_tasks: task_add_static_route.yml
+  - include_tasks: task_enable_ssh_support.yml
